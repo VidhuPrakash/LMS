@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Add Node.js to PATH for Git Bash on Windows
+export PATH="/c/Program Files/nodejs:$PATH"

@@ -1,0 +1,8 @@
+export PATH="/c/Program Files/nodejs:$PATH"
+
+  echo "Running build..."
+  cd apps/client && pnpm build && cd ../..
+
+lint-staged
+
+pnpm dlx ultracite fix
