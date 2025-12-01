@@ -7,6 +7,8 @@ import { testDatabaseConnection } from "./db/index";
 import { env } from "./config/env";
 import { logger } from "./lib/logger";
 import router from "./router";
+import { testEmailConnection } from "./lib/email";
+import { seedWithBetterAuth } from "./db/seed-super-admin";
 
 const app = new OpenAPIHono();
 
@@ -19,6 +21,7 @@ app.use(
     credentials: true,
   })
 );
+
 
 testDatabaseConnection().then(() => {
   logger.info("Database connection established");
@@ -63,12 +66,19 @@ app.onError((err, c) => {
   );
 });
 
-logger.info(`🚀 Server starting on http://localhost:${env.PORT}`);
-logger.info(
-  `📚 API Documentation available at http://localhost:${env.PORT}/docs`
-);
 
 serve({
   fetch: app.fetch,
   port: env.PORT,
+}, async (info) => {
+
+  logger.info(`🚀 Server running on http://localhost:${info.port}`);
+  logger.info(
+    `📚 API Documentation available at http://localhost:${info.port}/docs`
+  );
+
+  await testEmailConnection();
+  await seedWithBetterAuth();
+
+
 });

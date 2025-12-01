@@ -1,0 +1,55 @@
+import { pgTable, uuid, text, integer, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { modules } from "./modules";
+import { user } from "./auth";
+import { relations } from "drizzle-orm";
+import { courseWatchedLessons } from "./course";
+
+
+export const lessonTypeEnum = pgEnum("lesson_type", ["video", "pdf", "file", "audio", "text", "quiz"]);
+
+export const lessons = pgTable("lessons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  moduleId: uuid("module_id").notNull().references(() => modules.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  lessonType: lessonTypeEnum("lesson_type").notNull(),
+  uploadedBy: uuid("uploaded_by").notNull().references(() => user.id),
+  lessonOrder: integer("lesson_order").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});
+
+export const lessonComments = pgTable("lesson_comments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  lessonId: uuid("lesson_id").notNull().references(() => lessons.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  commentText: text("comment_text").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});
+
+export const lessonsRelations = relations(lessons, ({ one, many }) => ({
+  module: one(modules, {
+    fields: [lessons.moduleId],
+    references: [modules.id],
+  }),
+  uploader: one(user, {
+    fields: [lessons.uploadedBy],
+    references: [user.id],
+  }),
+  comments: many(lessonComments),
+  watchedLessons: many(courseWatchedLessons),
+}));
+
+export const lessonCommentsRelations = relations(lessonComments, ({ one }) => ({
+  lesson: one(lessons, {
+    fields: [lessonComments.lessonId],
+    references: [lessons.id],
+  }),
+  user: one(user, {
+    fields: [lessonComments.userId],
+    references: [user.id],
+  }),
+}));
+

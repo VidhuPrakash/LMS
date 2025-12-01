@@ -25,6 +25,18 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),
+
+    SMTP_HOST: z.string().min(1, 'SMTP_HOST is required'),
+    SMTP_PORT: z.string().default('587'),
+    SMTP_USER: z.string().email('SMTP_USER must be a valid email'),
+    SMTP_PASS: z.string().min(1, 'SMTP_PASS is required'),
+    EMAIL_FROM: z.string().email('EMAIL_FROM must be a valid email'),
+
+    SUPER_ADMIN_EMAIL: z.string().email().default('admin@example.com'),
+    SUPER_ADMIN_PASSWORD: z.string().min(8).default('SuperAdmin@123'),
+    SUPER_ADMIN_NAME: z.string().default('Super Admin'),
+    SUPER_ADMIN_PHONE: z.string().optional(),
+
   },
 
   runtimeEnv: process.env,
