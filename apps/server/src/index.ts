@@ -36,6 +36,7 @@ app.get("/", (c) => {
   });
 });
 
+// version 1
 app.route("/api", router);
 
 app.doc("/openapi.json", {

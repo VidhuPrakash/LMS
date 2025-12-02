@@ -3,6 +3,7 @@ import { modules } from "./modules";
 import { user } from "./auth";
 import { relations } from "drizzle-orm";
 import { courseWatchedLessons } from "./course";
+import { files } from "./files";
 
 
 export const lessonTypeEnum = pgEnum("lesson_type", ["video", "pdf", "file", "audio", "text", "quiz"]);
@@ -28,6 +29,26 @@ export const lessonComments = pgTable("lesson_comments", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
+
+export const lessonFiles = pgTable("lesson_files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  lessonId: uuid("lesson_id").notNull().references(() => lessons.id, { onDelete: "cascade" }),
+  fileId: uuid("file_id").notNull().references(() => files.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});
+
+export const lessonFilesRelations = relations(lessonFiles, ({ one }) => ({
+  file: one(files, {
+    fields: [lessonFiles.fileId],
+    references: [files.id],
+  }),
+  lesson: one(lessons, {
+    fields: [lessonFiles.lessonId],
+    references: [lessons.id],
+  }),
+}));
 
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   module: one(modules, {

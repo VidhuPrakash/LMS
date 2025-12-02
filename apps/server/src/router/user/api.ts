@@ -1,17 +1,42 @@
 import { createRoute } from "@hono/zod-openapi";
-import { getUserSchema } from "./validation";
+import { 
+  userPaginationQuerySchema,
+  listUsersResponseSchema,
+  errorResponseSchema
+} from "./validation";
 
-export const getUsersRoute = createRoute({
+export const listUsersRoute = createRoute({
   method: "get",
-  path: "/api/users",
+  path: "/",
   tags: ["Users"],
   security: [{ bearerAuth: [] }],
   request: {
-    params: getUserSchema,
+    query: userPaginationQuerySchema,
   },
   responses: {
-    "200": {
-      description: "Returns a list of users",
+    200: {
+      content: {
+        "application/json": {
+          schema: listUsersResponseSchema,
+        },
+      },
+      description: "Users retrieved successfully",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Unauthorized - authentication required",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Internal server error",
     },
   },
 });
