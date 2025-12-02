@@ -4,6 +4,7 @@ import { enrollments } from "./enrollment";
 import { lessons } from "./lessons";
 import { modules } from "./modules";
 import { relations } from "drizzle-orm";
+import { files } from "./files";
 
 export const courseStatusEnum = pgEnum("course_status", ["published", "on_hold", "draft"]);
 export const courseLevelEnum = pgEnum("course_level", ["beginner", "intermediate", "advanced"]);
@@ -15,7 +16,7 @@ export const courses = pgTable("courses", {
   description: text("description"),
   isFree: boolean("is_free").notNull().default(false),
   price: numeric("price", { precision: 10, scale: 2 }),
-  thumbnailUrl: text("thumbnail_url"),
+   thumbnailFileId: uuid("thumbnail_file_id").references(() => files.id, { onDelete: "set null" }),
   level: courseLevelEnum("level").notNull(),
   language: text("language").notNull().default("en"),
   status: courseStatusEnum("status").notNull().default("draft"),
@@ -77,13 +78,17 @@ export const reviews = pgTable("reviews", {
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
-export const coursesRelations = relations(courses, ({ many }) => ({
+export const coursesRelations = relations(courses, ({ one,many }) => ({
   mentors: many(courseMentors),
   modules: many(modules),
   enrollments: many(enrollments),
   progress: many(courseProgress),
   watchedLessons: many(courseWatchedLessons),
   reviews: many(reviews),
+   thumbnail: one(files, {
+    fields: [courses.thumbnailFileId],
+    references: [files.id],
+  }),
 }));
 
 // Course Mentor Relations

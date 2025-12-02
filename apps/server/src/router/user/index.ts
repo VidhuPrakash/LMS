@@ -1,9 +1,10 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { getUsersRoute } from "./api";
-import { getUserController } from "./controller";
+import { listUsersRoute } from "./api";
+import { listUsersController } from "./controller";
 
 const userRouter = new OpenAPIHono();
 
-userRouter.openapi(getUsersRoute, getUserController);
+// List users
+userRouter.openapi(listUsersRoute, listUsersController);
 
 export default userRouter;

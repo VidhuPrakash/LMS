@@ -27,6 +27,7 @@ import {
   reviews,
   coursesRelations,
   reviewsRelations,
+
 } from "./schema/course";
 
 import { enrollments, enrollmentsRelations } from "./schema/enrollment";
@@ -36,6 +37,7 @@ import {
   lessonTypeEnum,
   lessons,
   lessonsRelations,
+  lessonFiles, lessonFilesRelations
 } from "./schema/lessons";
 import { modules, modulesRelations } from "./schema/modules";
 import {
@@ -50,6 +52,7 @@ import {
   quizzes,
   quizzesRelations,
 } from "./schema/quiz";
+import { files, filesRelations } from "./schema/files"
 
 const schema = {
   user,
@@ -92,6 +95,10 @@ const schema = {
   quizQuestionsRelations,
   quizzes,
   quizzesRelations,
+  lessonFiles,
+  lessonFilesRelations,
+  files,
+  filesRelations
 };
 
 neonConfig.webSocketConstructor = ws;

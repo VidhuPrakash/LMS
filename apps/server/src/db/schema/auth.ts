@@ -4,13 +4,15 @@ import { courseCertificates, courseMentors, reviews } from "./course";
 import { enrollments } from "./enrollment";
 import { lessonComments, lessons } from "./lessons";
 import { quizAnswers, quizAttempts } from "./quiz";
+import { files } from "./files";
 
 export const user = pgTable("user", {
- id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  avatarFileId: uuid("avatar_file_id").references(() => files.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -46,7 +48,7 @@ export const session = pgTable(
 export const account = pgTable(
   "account",
   {
-     id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey().defaultRandom(),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: uuid("user_id")
@@ -83,10 +85,10 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)]
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
   accounts: many(account),
-    mentorships: many(courseMentors),
+  mentorships: many(courseMentors),
   enrollments: many(enrollments),
   uploadedLessons: many(lessons),
   quizAttempts: many(quizAttempts),
@@ -94,6 +96,10 @@ export const userRelations = relations(user, ({ many }) => ({
   issuedCertificates: many(courseCertificates),
   lessonComments: many(lessonComments),
   reviews: many(reviews),
+  avatar: one(files, {
+    fields: [user.avatarFileId],
+    references: [files.id],
+  }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
