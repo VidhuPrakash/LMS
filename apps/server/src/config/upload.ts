@@ -21,6 +21,7 @@ if (!env.R2_BUCKET_NAME) {
   throw new Error('R2_BUCKET_NAME environment variable is required');
 }
 
+
 const s3 = new S3Client({
   region: 'auto',
   endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -40,7 +41,7 @@ export class DocumentStorage {
   private generateFolderPath(options: UploadOptions): string {
     const { userId, documentType } = options;
 
-    return `userId-${userId}/${documentType}`;
+    return `${documentType}/userId-${userId}`;
   }
 
   private generateFileName(file: File, options: UploadOptions): string {
@@ -61,6 +62,7 @@ async uploadDocument(file: File, options: UploadOptions) {
     const fileName = this.generateFileName(file, options);
     const key = `${folderPath}/${fileName}`;
     const checksum = await this.calculateChecksum(file);
+
 
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,

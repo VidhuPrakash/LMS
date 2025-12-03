@@ -9,8 +9,16 @@ interface UploadFileData {
 }
 
 export const uploadFileService = async (data: UploadFileData) => {
+  try {
+    
+  
   const { file, userId, documentType } = data;
 
+  console.log("Starting file upload:", {
+      userId: data.userId,
+      documentType: data.documentType,
+      fileName: data.file.name
+    });
   // Upload file to storage
   const uploadResult = await documentStorage.uploadDocument(file, {
     userId,
@@ -34,4 +42,8 @@ export const uploadFileService = async (data: UploadFileData) => {
     .returning();
 
   return fileRecord;
+  } catch (error) {
+    console.log("File upload failed:", error);
+   throw new Error("File upload failed: " + (error instanceof Error ? error.message : String(error))); 
+  }
 };
