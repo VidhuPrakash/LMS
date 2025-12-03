@@ -61,6 +61,7 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   }),
   comments: many(lessonComments),
   watchedLessons: many(courseWatchedLessons),
+  lessonFiles: many(lessonFiles),
 }));
 
 export const lessonCommentsRelations = relations(lessonComments, ({ one }) => ({

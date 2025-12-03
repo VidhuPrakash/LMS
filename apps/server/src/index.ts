@@ -12,6 +12,21 @@ import { seedWithBetterAuth } from "./db/seed-super-admin";
 
 const app = new OpenAPIHono();
 
+// Register security schemes
+app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
+  type: "http",
+  scheme: "bearer",
+  bearerFormat: "JWT",
+  description: "Enter your better-auth session token",
+});
+
+app.openAPIRegistry.registerComponent("securitySchemes", "cookieAuth", {
+  type: "apiKey",
+  in: "cookie",
+  name: "better-auth.session_token",
+  description: "Session token from better-auth (automatically sent if logged in)",
+});
+
 // Enable CORS for Next.js app
 app.use("/*", pinoLogger({ pino: logger }));
 app.use(

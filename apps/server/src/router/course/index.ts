@@ -7,31 +7,42 @@ import {
   getCourseUserRoute,
   listCoursesAdminRoute,
   listCoursesUserRoute,
+  enrollCourseRoute,
+  listEnrollmentsRoute,
 } from "./route";
-import { createCourseController, deleteCourseController, getCourseAdminController, getCourseUserController, listCoursesAdminController, listCoursesUserController, updateCourseController } from "./controller";
+import { 
+  createCourseController, 
+  deleteCourseController, 
+  enrollCourseController, 
+  getCourseAdminController, 
+  getCourseUserController, 
+  listCoursesAdminController, 
+  listCoursesUserController,
+  listEnrollmentsController,
+  updateCourseController 
+} from "./controller";
+import { authMiddleware, adminMiddleware } from "../../middleware/auth.middleware";
 
 
 const courseRouter = new OpenAPIHono();
 
-// Create course
+// Apply authentication to all routes
+courseRouter.use("*", authMiddleware);
+
+// Admin-only routes (require admin role)
+courseRouter.use("/", adminMiddleware);
 courseRouter.openapi(createCourseRoute, createCourseController);
-
-// Update course
+courseRouter.use("/:id", adminMiddleware);
 courseRouter.openapi(updateCourseRoute, updateCourseController);
-
-// Delete course
 courseRouter.openapi(deleteCourseRoute, deleteCourseController);
-
-// List courses - Admin (must come before /{id} routes)
+courseRouter.use("/admin/*", adminMiddleware);
 courseRouter.openapi(listCoursesAdminRoute, listCoursesAdminController);
-
-// List courses - User (must come before /{id} routes)
-courseRouter.openapi(listCoursesUserRoute, listCoursesUserController);
-
-// Get single course - Admin
 courseRouter.openapi(getCourseAdminRoute, getCourseAdminController);
 
-// Get single course - User
+// User routes (already authenticated via global middleware)
+courseRouter.openapi(enrollCourseRoute, enrollCourseController);
+courseRouter.openapi(listEnrollmentsRoute, listEnrollmentsController);
+courseRouter.openapi(listCoursesUserRoute, listCoursesUserController);
 courseRouter.openapi(getCourseUserRoute, getCourseUserController);
 
 export default courseRouter;

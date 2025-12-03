@@ -993,3 +993,247 @@ export const listCoursesUserService = async (params: ListCoursesParams & { userI
     },
   };
 };
+
+/**
+ * Enrolls a user in a free course and creates initial progress record.
+ * 
+ * @param {string} userId - The ID of the user enrolling.
+ * @param {string} courseId - The ID of the course to enroll in.
+ * @returns {Promise<{enrollment, progress}>} - The enrollment and progress records.
+ * @throws {Error} - If the course is not free, not found, or user is already enrolled.
+ */
+export const enrollCourseService = async (userId: string, courseId: string) => {
+  // Check if course exists and is free
+  const [course] = await db
+    .select()
+    .from(courses)
+    .where(and(
+      eq(courses.id, courseId),
+      isNull(courses.deletedAt)
+    ))
+    .limit(1);
+
+  if (!course) {
+    throw new Error("Course not found");
+  }
+
+  if (!course.isFree) {
+    throw new Error("This course is not free. Payment is required.");
+  }
+
+  // Check if user is already enrolled
+  const [existingEnrollment] = await db
+    .select()
+    .from(enrollments)
+    .where(and(
+      eq(enrollments.userId, userId),
+      eq(enrollments.courseId, courseId)
+    ))
+    .limit(1);
+
+  if (existingEnrollment) {
+    throw new Error("You are already enrolled in this course");
+  }
+
+  // Create enrollment
+  const [enrollment] = await db
+    .insert(enrollments)
+    .values({
+      userId,
+      courseId,
+    })
+    .returning();
+
+  // Create course progress record with 0% progress
+  const [progress] = await db
+    .insert(courseProgress)
+    .values({
+      enrollmentId: enrollment.id,
+      courseId,
+      progressPercent: 0,
+      lastWatchedSeconds: 0,
+      isCompleted: false,
+    })
+    .returning();
+
+  return {
+    enrollment: {
+      id: enrollment.id,
+      userId: enrollment.userId,
+      courseId: enrollment.courseId,
+      enrolledAt: enrollment.enrolledAt.toISOString(),
+    },
+    progress: {
+      id: progress.id,
+      progressPercent: progress.progressPercent,
+      isCompleted: progress.isCompleted,
+    },
+  };
+};
+
+/**
+ * Lists enrollments based on user role.
+ * Admin users see all enrollments with user details.
+ * Regular users see only their own enrollments.
+ * 
+ * @param {object} params - Pagination, filter parameters, userId, and role.
+ * @returns {Promise<{enrollments: array, pagination: object}>} - List of enrollments with pagination.
+ */
+export const listEnrollmentsService = async (params: {
+  page: number;
+  limit: number;
+  isFree?: boolean;
+  isCompleted?: boolean;
+  userId?: string;
+  requestingUserId: string;
+  userRole: string;
+}) => {
+  const page = params.page || 1;
+  const limit = params.limit || 10;
+  const offset = (page - 1) * limit;
+  const isAdmin = params.userRole === "admin";
+
+  const conditions = [];
+
+  // If not admin, only show requesting user's enrollments
+  // If admin and userId filter provided, filter by that userId
+  // If admin and no userId filter, show all enrollments
+  if (!isAdmin) {
+    conditions.push(eq(enrollments.userId, params.requestingUserId));
+  } else if (params.userId) {
+    conditions.push(eq(enrollments.userId, params.userId));
+  }
+
+  // Filter by course type (free/paid)
+  if (params.isFree !== undefined) {
+    conditions.push(eq(courses.isFree, params.isFree));
+  }
+
+  // Filter by completion status
+  if (params.isCompleted !== undefined) {
+    conditions.push(eq(courseProgress.isCompleted, params.isCompleted));
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Get total count
+  const [totalCount] = await db
+    .select({ count: count() })
+    .from(enrollments)
+    .innerJoin(courses, eq(enrollments.courseId, courses.id))
+    .leftJoin(courseProgress, eq(courseProgress.enrollmentId, enrollments.id))
+    .where(whereClause);
+
+  const total = totalCount?.count || 0;
+  const totalPages = Math.ceil(total / limit);
+
+  // Get enrollments with joins
+  const enrollmentsList = await db
+    .select({
+      enrollmentId: enrollments.id,
+      enrolledAt: enrollments.enrolledAt,
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+      userAvatar: user.image,
+      userAvatarFileId: user.avatarFileId,
+      courseId: courses.id,
+      courseTitle: courses.title,
+      courseSlug: courses.slug,
+      courseIsFree: courses.isFree,
+      coursePrice: courses.price,
+      courseThumbnailFileId: courses.thumbnailFileId,
+      courseLevel: courses.level,
+      courseLanguage: courses.language,
+      progressPercent: courseProgress.progressPercent,
+      progressLastWatchedSeconds: courseProgress.lastWatchedSeconds,
+      progressIsCompleted: courseProgress.isCompleted,
+      progressCompletedAt: courseProgress.completedAt,
+    })
+    .from(enrollments)
+    .innerJoin(user, eq(enrollments.userId, user.id))
+    .innerJoin(courses, eq(enrollments.courseId, courses.id))
+    .leftJoin(courseProgress, eq(courseProgress.enrollmentId, enrollments.id))
+    .where(whereClause)
+    .limit(limit)
+    .offset(offset)
+    .orderBy(enrollments.enrolledAt);
+
+  // Process enrollments with file URLs
+  const enrollmentsData = await Promise.all(
+    enrollmentsList.map(async (enrollment) => {
+      // Get user avatar URL
+      let userAvatarUrl: string | null = enrollment.userAvatar;
+      if (enrollment.userAvatarFileId) {
+        const [avatarFile] = await db
+          .select()
+          .from(files)
+          .where(eq(files.id, enrollment.userAvatarFileId))
+          .limit(1);
+
+        if (avatarFile && !avatarFile.deletedAt) {
+          userAvatarUrl = await documentStorage.getSignedUrl(avatarFile.key);
+        }
+      }
+
+      // Get course thumbnail URL
+      let thumbnailUrl: string | null = null;
+      if (enrollment.courseThumbnailFileId) {
+        const [thumbnailFile] = await db
+          .select()
+          .from(files)
+          .where(eq(files.id, enrollment.courseThumbnailFileId))
+          .limit(1);
+
+        if (thumbnailFile && !thumbnailFile.deletedAt) {
+          thumbnailUrl = await documentStorage.getSignedUrl(thumbnailFile.key);
+        }
+      }
+
+      const enrollmentData: any = {
+        id: enrollment.enrollmentId,
+        enrolledAt: enrollment.enrolledAt.toISOString(),
+        course: {
+          id: enrollment.courseId,
+          title: enrollment.courseTitle,
+          slug: enrollment.courseSlug,
+          isFree: enrollment.courseIsFree,
+          price: enrollment.coursePrice,
+          thumbnail: thumbnailUrl,
+          level: enrollment.courseLevel,
+          language: enrollment.courseLanguage,
+        },
+        progress: enrollment.progressPercent !== null ? {
+          progressPercent: enrollment.progressPercent,
+          lastWatchedSeconds: enrollment.progressLastWatchedSeconds || 0,
+          isCompleted: enrollment.progressIsCompleted || false,
+          completedAt: enrollment.progressCompletedAt ? enrollment.progressCompletedAt.toISOString() : null,
+        } : null,
+      };
+
+      // Only include user details for admin
+      if (isAdmin) {
+        enrollmentData.user = {
+          id: enrollment.userId,
+          name: enrollment.userName,
+          email: enrollment.userEmail,
+          avatar: userAvatarUrl,
+        };
+      }
+
+      return enrollmentData;
+    })
+  );
+
+  return {
+    enrollments: enrollmentsData,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
+};
+
+

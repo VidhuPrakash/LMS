@@ -724,3 +724,305 @@ export const listCoursesUserResponseSchema = z.object({
     }),
   }),
 });
+
+// Enroll in course request schema
+export const enrollCourseSchema = z.object({
+  courseId: z.string().uuid().openapi({
+    description: "Course ID to enroll in",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  }),
+  userId: z.string().uuid().openapi({
+    description: "User ID enrolling in the course",
+    example: "789e0123-e45f-67g8-h901-234567890abc",
+  }),
+});
+
+// Enroll in course response schema
+export const enrollCourseResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: z.object({
+    enrollment: z.object({
+      id: z.string().uuid().openapi({
+        description: "Enrollment ID",
+        example: "456e7890-e12b-34c5-d678-987654321fed",
+      }),
+      userId: z.string().uuid().openapi({
+        description: "User ID",
+        example: "789e0123-e45f-67g8-h901-234567890abc",
+      }),
+      courseId: z.string().uuid().openapi({
+        description: "Course ID",
+        example: "123e4567-e89b-12d3-a456-426614174000",
+      }),
+      enrolledAt: z.string().datetime().openapi({
+        description: "Enrollment timestamp",
+        example: "2024-12-03T10:00:00Z",
+      }),
+    }),
+    progress: z.object({
+      id: z.string().uuid().openapi({
+        description: "Progress record ID",
+        example: "abc12345-e89b-12d3-a456-426614174000",
+      }),
+      progressPercent: z.number().openapi({
+        description: "Course completion percentage",
+        example: 0,
+      }),
+      isCompleted: z.boolean().openapi({
+        description: "Whether the course is completed",
+        example: false,
+      }),
+    }),
+  }),
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Successfully enrolled in the course",
+  }),
+});
+
+// Enrollment query schema
+export const enrollmentQuerySchema = z.object({
+  page: z.string().optional().default("1").transform(Number).openapi({
+    description: "Page number",
+    example: "1",
+    param: {
+      name: "page",
+      in: "query",
+    },
+  }),
+  limit: z.string().optional().default("10").transform(Number).openapi({
+    description: "Items per page",
+    example: "10",
+    param: {
+      name: "limit",
+      in: "query",
+    },
+  }),
+  isFree: z.string().optional().transform((val) => val === "true" ? true : val === "false" ? false : undefined).openapi({
+    description: "Filter by free or paid courses",
+    example: "true",
+    param: {
+      name: "isFree",
+      in: "query",
+    },
+  }),
+  isCompleted: z.string().optional().transform((val) => val === "true" ? true : val === "false" ? false : undefined).openapi({
+    description: "Filter by completed or in-progress enrollments",
+    example: "false",
+    param: {
+      name: "isCompleted",
+      in: "query",
+    },
+  }),
+  userId: z.string().uuid().optional().openapi({
+    description: "Filter by specific user ID (admin only)",
+    example: "789e0123-e45f-67g8-h901-234567890abc",
+    param: {
+      name: "userId",
+      in: "query",
+    },
+  }),
+});
+
+// Enrollment list response schema (unified for both admin and user)
+export const listEnrollmentsResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: z.object({
+    enrollments: z.array(z.object({
+      id: z.string().uuid().openapi({
+        description: "Enrollment ID",
+        example: "456e7890-e12b-34c5-d678-987654321fed",
+      }),
+      enrolledAt: z.string().datetime().openapi({
+        description: "Enrollment timestamp",
+        example: "2024-11-15T10:00:00Z",
+      }),
+      user: z.object({
+        id: z.string().uuid().openapi({
+          description: "User ID",
+          example: "789e0123-e45f-67g8-h901-234567890abc",
+        }),
+        name: z.string().openapi({
+          description: "User name",
+          example: "John Doe",
+        }),
+        email: z.string().email().openapi({
+          description: "User email",
+          example: "john@example.com",
+        }),
+        avatar: z.string().nullable().openapi({
+          description: "User avatar URL",
+          example: "https://example.com/avatars/john.png",
+        }),
+      }).optional().openapi({
+        description: "User details (only for admin role)",
+      }),
+      course: z.object({
+        id: z.string().uuid().openapi({
+          description: "Course ID",
+          example: "123e4567-e89b-12d3-a456-426614174000",
+        }),
+        title: z.string().openapi({
+          description: "Course title",
+          example: "Introduction to Web Development",
+        }),
+        slug: z.string().openapi({
+          description: "Course slug",
+          example: "introduction-to-web-development",
+        }),
+        isFree: z.boolean().openapi({
+          description: "Whether the course is free",
+          example: true,
+        }),
+        price: z.string().nullable().openapi({
+          description: "Course price",
+          example: "49.99",
+        }),
+        thumbnail: z.string().nullable().openapi({
+          description: "Course thumbnail URL",
+          example: "https://example.com/thumbnails/course.png",
+        }),
+        level: z.enum(["beginner", "intermediate", "advanced"]).openapi({
+          description: "Course level",
+          example: "beginner",
+        }),
+        language: z.string().optional().openapi({
+          description: "Course language",
+          example: "en",
+        }),
+      }),
+      progress: z.object({
+        progressPercent: z.number().openapi({
+          description: "Course completion percentage",
+          example: 45,
+        }),
+        lastWatchedSeconds: z.number().optional().openapi({
+          description: "Last watched position in seconds",
+          example: 1200,
+        }),
+        isCompleted: z.boolean().openapi({
+          description: "Whether the course is completed",
+          example: false,
+        }),
+        completedAt: z.string().datetime().nullable().openapi({
+          description: "Completion timestamp",
+          example: null,
+        }),
+      }).nullable(),
+    })),
+    pagination: z.object({
+      page: z.number().openapi({
+        description: "Current page number",
+        example: 1,
+      }),
+      limit: z.number().openapi({
+        description: "Items per page",
+        example: 10,
+      }),
+      total: z.number().openapi({
+        description: "Total number of enrollments",
+        example: 50,
+      }),
+      totalPages: z.number().openapi({
+        description: "Total number of pages",
+        example: 5,
+      }),
+    }),
+  }),
+});
+
+// Legacy alias for backward compatibility
+export const listEnrollmentsUserResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: z.object({
+    enrollments: z.array(z.object({
+      id: z.string().uuid().openapi({
+        description: "Enrollment ID",
+        example: "456e7890-e12b-34c5-d678-987654321fed",
+      }),
+      enrolledAt: z.string().datetime().openapi({
+        description: "Enrollment timestamp",
+        example: "2024-11-15T10:00:00Z",
+      }),
+      course: z.object({
+        id: z.string().uuid().openapi({
+          description: "Course ID",
+          example: "123e4567-e89b-12d3-a456-426614174000",
+        }),
+        title: z.string().openapi({
+          description: "Course title",
+          example: "Introduction to Web Development",
+        }),
+        slug: z.string().openapi({
+          description: "Course slug",
+          example: "introduction-to-web-development",
+        }),
+        isFree: z.boolean().openapi({
+          description: "Whether the course is free",
+          example: true,
+        }),
+        price: z.string().nullable().openapi({
+          description: "Course price",
+          example: "49.99",
+        }),
+        thumbnail: z.string().nullable().openapi({
+          description: "Course thumbnail URL",
+          example: "https://example.com/thumbnails/course.png",
+        }),
+        level: z.enum(["beginner", "intermediate", "advanced"]).openapi({
+          description: "Course level",
+          example: "beginner",
+        }),
+        language: z.string().openapi({
+          description: "Course language",
+          example: "en",
+        }),
+      }),
+      progress: z.object({
+        progressPercent: z.number().openapi({
+          description: "Course completion percentage",
+          example: 45,
+        }),
+        lastWatchedSeconds: z.number().openapi({
+          description: "Last watched position in seconds",
+          example: 1200,
+        }),
+        isCompleted: z.boolean().openapi({
+          description: "Whether the course is completed",
+          example: false,
+        }),
+        completedAt: z.string().datetime().nullable().openapi({
+          description: "Completion timestamp",
+          example: null,
+        }),
+      }).nullable(),
+    })),
+    pagination: z.object({
+      page: z.number().openapi({
+        description: "Current page number",
+        example: 1,
+      }),
+      limit: z.number().openapi({
+        description: "Items per page",
+        example: 10,
+      }),
+      total: z.number().openapi({
+        description: "Total number of enrollments",
+        example: 50,
+      }),
+      totalPages: z.number().openapi({
+        description: "Total number of pages",
+        example: 5,
+      }),
+    }),
+  }),
+});
