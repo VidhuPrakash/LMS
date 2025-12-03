@@ -7,7 +7,7 @@ import {
   getCourseUserRoute,
   listCoursesAdminRoute,
   listCoursesUserRoute,
-} from "./openapi";
+} from "./route";
 import { createCourseController, deleteCourseController, getCourseAdminController, getCourseUserController, listCoursesAdminController, listCoursesUserController, updateCourseController } from "./controller";
 
 

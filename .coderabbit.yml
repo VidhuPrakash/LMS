@@ -1,0 +1,99 @@
+language: en-US
+
+reviews:
+  high_level_summary: true
+  poem: off
+  review_status: normal
+  collapse_walkthrough: false
+  
+  auto_review:
+    enabled: true
+    drafts: false
+    
+  path_instructions:
+    - path: "apps/client/**"
+      instructions: |
+        - Focus on Next.js best practices and App Router patterns
+        - Check for proper client/server component usage
+        - Verify SEO optimization (metadata, structured data)
+        - Review accessibility (ARIA labels, semantic HTML)
+        - Check for proper error boundaries and loading states
+        - Verify environment variable usage is secure
+        - Check for performance optimizations (image handling, code splitting)
+        - Check for proper state management and data fetching strategies
+        - Review styling consistency and responsiveness
+        - Ensure proper use of Next.js API routes if applicable
+        - Verify integration with backend services
+        - Check for is there any console.log or debug code left
+    
+    - path: "apps/server/**"
+      instructions: |
+        - Focus on Hono framework best practices
+        - Verify API endpoint security and validation
+        - Check for proper error handling and status codes
+        - Review database query optimization
+        - Verify CORS and authentication middleware
+        - Check for rate limiting where appropriate
+        - Check for is there any console.log or debug code left
+    
+    - path: "packages/**"
+      instructions: |
+        - Ensure shared code is framework-agnostic
+        - Verify proper TypeScript types are exported
+        - Check for breaking changes in APIs
+        - Review documentation for shared utilities
+        - Verify proper dependency management
+    
+    - path: "**/*.test.{ts,tsx,js,jsx}"
+      instructions: |
+        - Verify test coverage for critical paths
+        - Check for proper mocking and test isolation
+        - Review test descriptions for clarity
+        - Ensure edge cases are covered
+    
+    - path: "turbo.json"
+      instructions: |
+        - Review pipeline dependencies and caching strategy
+        - Verify output configurations
+        - Check for optimal task parallelization
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  - "README.md"
+  - "CONTRIBUTING.md"
+  - "docs/**"
+
+early_access: false
+
+tools:
+  ast-grep:
+    enabled: true
+  ruff:
+    enabled: false
+
+ignore:
+  - "node_modules/**"
+  - "**/node_modules/**"
+  - "dist/**"
+  - "**/dist/**"
+  - ".next/**"
+  - "**/.next/**"
+  - "out/**"
+  - "**/out/**"
+  - "build/**"
+  - "**/build/**"
+  - ".turbo/**"
+  - "**/.turbo/**"
+  - "pnpm-lock.yaml"
+  - "package-lock.json"
+  - "yarn.lock"
+  - "*.generated.*"
+  - "**/*.generated.*"
+  - "*.config.js"
+  - "*.config.ts"
+  - ".env*"
+  - "**/.env*"
+
+enable_free_tier: false
