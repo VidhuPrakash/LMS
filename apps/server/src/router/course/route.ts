@@ -10,6 +10,10 @@ import {
   paginationQuerySchema,
   listCoursesAdminResponseSchema,
   listCoursesUserResponseSchema,
+  enrollCourseSchema,
+  enrollCourseResponseSchema,
+  enrollmentQuerySchema,
+  listEnrollmentsResponseSchema,
   errorResponseSchema,
 } from "./validation";
 
@@ -17,7 +21,7 @@ export const createCourseRoute = createRoute({
   method: "post",
   path: "/",
   tags: ["Courses"],
-  security: [{ bearerAuth: [] }],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     body: {
       content: {
@@ -76,7 +80,7 @@ export const updateCourseRoute = createRoute({
   method: "put",
   path: "/{id}",
   tags: ["Courses"],
-  security: [{ bearerAuth: [] }],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     params: courseIdParamSchema,
     body: {
@@ -144,7 +148,7 @@ export const deleteCourseRoute = createRoute({
   method: "delete",
   path: "/{id}",
   tags: ["Courses"],
-  security: [{ bearerAuth: [] }],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     params: courseIdParamSchema,
   },
@@ -197,7 +201,7 @@ export const getCourseAdminRoute = createRoute({
   method: "get",
   path: "/admin/{id}",
   tags: ["Courses"],
-  security: [{ bearerAuth: [] }],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     params: courseIdParamSchema,
   },
@@ -241,7 +245,7 @@ export const getCourseUserRoute = createRoute({
   method: "get",
   path: "/{id}",
   tags: ["Courses"],
-  security: [{ bearerAuth: [] }],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     params: courseIdParamSchema,
   },
@@ -285,7 +289,7 @@ export const listCoursesAdminRoute = createRoute({
   method: "get",
   path: "/admin",
   tags: ["Courses"],
-  security: [{ bearerAuth: [] }],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     query: paginationQuerySchema,
   },
@@ -321,7 +325,7 @@ export const listCoursesUserRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Courses"],
-  security: [{ bearerAuth: [] }],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     query: paginationQuerySchema,
   },
@@ -333,6 +337,109 @@ export const listCoursesUserRoute = createRoute({
         },
       },
       description: "Courses retrieved successfully with enrollment and progress information",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Unauthorized - authentication required",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Internal server error",
+    },
+  },
+});
+
+export const enrollCourseRoute = createRoute({
+  method: "post",
+  path: "/enroll",
+  tags: ["Courses"],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: enrollCourseSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        "application/json": {
+          schema: enrollCourseResponseSchema,
+        },
+      },
+      description: "Successfully enrolled in the course",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Bad request - course is not free or invalid course ID",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Unauthorized - authentication required",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Course not found",
+    },
+    409: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Conflict - already enrolled in this course",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Internal server error",
+    },
+  },
+});
+
+export const listEnrollmentsRoute = createRoute({
+  method: "get",
+  path: "/enrollments",
+  tags: ["Courses"],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
+  request: {
+    query: enrollmentQuerySchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: listEnrollmentsResponseSchema,
+        },
+      },
+      description: "Enrollments retrieved successfully. Admin users see all enrollments with user details. Regular users see only their own enrollments.",
     },
     401: {
       content: {

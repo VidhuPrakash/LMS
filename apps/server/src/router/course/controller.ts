@@ -2,9 +2,20 @@ import type { Context } from "hono";
 import { ZodError } from "zod";
 import {
   createCourseSchema,
+  enrollCourseSchema,
   updateCourseSchema,
 } from "./validation";
-import { createCourseService, deleteCourseService, getCourseAdminService, getCourseUserService, listCoursesAdminService, listCoursesUserService, updateCourseService } from "./service";
+import { 
+  createCourseService, 
+  deleteCourseService, 
+  enrollCourseService, 
+  getCourseAdminService, 
+  getCourseUserService, 
+  listCoursesAdminService, 
+  listCoursesUserService,
+  listEnrollmentsService,
+  updateCourseService 
+} from "./service";
 import { logger } from "../../lib/logger";
 
 /**
@@ -340,7 +351,7 @@ export const listCoursesUserController = async (c: Context) => {
     const isFree = query.isFree === "true" ? true : query.isFree === "false" ? false : undefined;
     
     // Get user ID from authentication context
-    const userId = "ddfba436-e4f7-41f3-b742-f30b83c3d275"; // Adjust based on your auth implementation
+    const userId = c.get("user")?.id;
 
     const result = await listCoursesUserService({
       page,
@@ -352,6 +363,133 @@ export const listCoursesUserController = async (c: Context) => {
       userId,
     });
     
+    return c.json(
+      {
+        success: true,
+        data: result,
+      },
+      200
+    );
+  } catch (error) {
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      500
+    );
+  }
+};
+
+/**
+ * Handles an HTTP request to enroll a user in a free course.
+ *
+ * The request body must contain:
+ * - courseId: The ID of the course to enroll in.
+ *
+ * The response will contain:
+ * - success: A boolean indicating if the operation was successful.
+ * - data: The enrollment and progress records.
+ * - message: A string indicating the result of the operation.
+ *
+ * If the course is not free, a 400 response will be returned.
+ * If the course is not found, a 404 response will be returned.
+ * If the user is already enrolled, a 409 response will be returned.
+ * If an error occurs during enrollment, a 500 response will be returned.
+ */
+export const enrollCourseController = async (c: Context) => {
+  try {
+    const body = await c.req.json();
+    const validatedData = enrollCourseSchema.parse(body);
+
+    const result = await enrollCourseService(validatedData.userId, validatedData.courseId);
+
+    return c.json(
+      {
+        success: true,
+        data: result,
+        message: "Successfully enrolled in the course",
+      },
+      201
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "Course not found") {
+        return c.json(
+          {
+            success: false,
+            error: error.message,
+          },
+          404
+        );
+      }
+      if (error.message === "This course is not free. Payment is required.") {
+        return c.json(
+          {
+            success: false,
+            error: error.message,
+          },
+          400
+        );
+      }
+      if (error.message === "You are already enrolled in this course") {
+        return c.json(
+          {
+            success: false,
+            error: error.message,
+          },
+          409
+        );
+      }
+    }
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      500
+    );
+  }
+};
+
+/**
+ * Lists enrollments based on user role.
+ * Admin users see all enrollments with user details and can filter by userId.
+ * Regular users see only their own enrollments.
+ * Supports pagination and filters for free/paid courses and completion status.
+ */
+export const listEnrollmentsController = async (c: Context) => {
+  try {
+    const query = c.req.query();
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const isFree = query.isFree === "true" ? true : query.isFree === "false" ? false : undefined;
+    const isCompleted = query.isCompleted === "true" ? true : query.isCompleted === "false" ? false : undefined;
+    const filterUserId = query.userId; // Admin can filter by specific userId
+
+    // Get user from authentication context
+    const authUser = c.get("user");
+    
+    if (!authUser?.id) {
+      return c.json(
+        {
+          success: false,
+          error: "User not authenticated",
+        },
+        401
+      );
+    }
+
+    const result = await listEnrollmentsService({
+      page,
+      limit,
+      isFree,
+      isCompleted,
+      userId: filterUserId,
+      requestingUserId: authUser?.id,
+      userRole: authUser?.role || "user",
+    });
+
     return c.json(
       {
         success: true,
