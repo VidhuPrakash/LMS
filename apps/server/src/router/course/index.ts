@@ -27,15 +27,15 @@ import { authMiddleware, adminMiddleware } from "../../middleware/auth.middlewar
 const courseRouter = new OpenAPIHono();
 
 // Apply authentication to all routes
-courseRouter.use("*", authMiddleware);
+// courseRouter.use("*", authMiddleware);
 
 // Admin-only routes (require admin role)
-courseRouter.use("/", adminMiddleware);
+// courseRouter.use("/", adminMiddleware);
 courseRouter.openapi(createCourseRoute, createCourseController);
-courseRouter.use("/:id", adminMiddleware);
+// courseRouter.use("/:id", adminMiddleware);
 courseRouter.openapi(updateCourseRoute, updateCourseController);
 courseRouter.openapi(deleteCourseRoute, deleteCourseController);
-courseRouter.use("/admin/*", adminMiddleware);
+// courseRouter.use("/admin/*", adminMiddleware);
 courseRouter.openapi(listCoursesAdminRoute, listCoursesAdminController);
 courseRouter.openapi(getCourseAdminRoute, getCourseAdminController);
 

@@ -6,12 +6,13 @@ import { courseWatchedLessons } from "./course";
 import { files } from "./files";
 
 
-export const lessonTypeEnum = pgEnum("lesson_type", ["video", "pdf", "file", "audio", "text", "quiz"]);
+export const lessonTypeEnum = pgEnum("lesson_type", ["video", "pdf", "file", "audio", "text"]);
 
 export const lessons = pgTable("lessons", {
   id: uuid("id").primaryKey().defaultRandom(),
   moduleId: uuid("module_id").notNull().references(() => modules.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
+  description: text("description").notNull(),
   lessonType: lessonTypeEnum("lesson_type").notNull(),
   uploadedBy: uuid("uploaded_by").notNull().references(() => user.id),
   lessonOrder: integer("lesson_order").notNull(),

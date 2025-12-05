@@ -1095,28 +1095,24 @@ export const listEnrollmentsService = async (params: {
 
   const conditions = [];
 
-  // If not admin, only show requesting user's enrollments
-  // If admin and userId filter provided, filter by that userId
-  // If admin and no userId filter, show all enrollments
+
   if (!isAdmin) {
     conditions.push(eq(enrollments.userId, params.requestingUserId));
   } else if (params.userId) {
     conditions.push(eq(enrollments.userId, params.userId));
   }
 
-  // Filter by course type (free/paid)
   if (params.isFree !== undefined) {
     conditions.push(eq(courses.isFree, params.isFree));
   }
 
-  // Filter by completion status
   if (params.isCompleted !== undefined) {
     conditions.push(eq(courseProgress.isCompleted, params.isCompleted));
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  // Get total count
+
   const [totalCount] = await db
     .select({ count: count() })
     .from(enrollments)
@@ -1127,7 +1123,6 @@ export const listEnrollmentsService = async (params: {
   const total = totalCount?.count || 0;
   const totalPages = Math.ceil(total / limit);
 
-  // Get enrollments with joins
   const enrollmentsList = await db
     .select({
       enrollmentId: enrollments.id,
@@ -1159,10 +1154,9 @@ export const listEnrollmentsService = async (params: {
     .offset(offset)
     .orderBy(enrollments.enrolledAt);
 
-  // Process enrollments with file URLs
   const enrollmentsData = await Promise.all(
     enrollmentsList.map(async (enrollment) => {
-      // Get user avatar URL
+  
       let userAvatarUrl: string | null = enrollment.userAvatar;
       if (enrollment.userAvatarFileId) {
         const [avatarFile] = await db
@@ -1176,7 +1170,7 @@ export const listEnrollmentsService = async (params: {
         }
       }
 
-      // Get course thumbnail URL
+    
       let thumbnailUrl: string | null = null;
       if (enrollment.courseThumbnailFileId) {
         const [thumbnailFile] = await db
@@ -1211,7 +1205,6 @@ export const listEnrollmentsService = async (params: {
         } : null,
       };
 
-      // Only include user details for admin
       if (isAdmin) {
         enrollmentData.user = {
           id: enrollment.userId,
