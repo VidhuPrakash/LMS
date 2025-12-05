@@ -6,6 +6,7 @@ import { relations } from "drizzle-orm";
 export const quizzes = pgTable("quizzes", {
   id: uuid("id").primaryKey().defaultRandom(),
   moduleId: uuid("module_id").notNull().references(() => modules.id, { onDelete: "cascade" }),
+  quizOrder: integer("quiz_order").notNull(),
   title: text("title").notNull(),
   instructions: text("instructions"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

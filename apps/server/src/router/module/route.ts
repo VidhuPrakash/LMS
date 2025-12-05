@@ -8,6 +8,7 @@ import {
   courseIdQuerySchema,
   listModulesResponseSchema,
   getModuleResponseSchema,
+  deleteModuleResponseSchema,
   errorResponseSchema,
 } from "./validation";
 
@@ -131,6 +132,51 @@ export const updateModuleRoute = createRoute({
 });
 
 
+export const listModulesRoute = createRoute({
+  method: "get",
+  path: "/",
+  tags: ["Modules"],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
+  request: {
+    query: courseIdQuerySchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: listModulesResponseSchema,
+        },
+      },
+      description: "Modules retrieved successfully with lessons and pagination",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Unauthorized - authentication required",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Course not found",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Internal server error",
+    },
+  },
+});
+
+
 export const getModuleByIdRoute = createRoute({
   method: "get",
   path: "/{id}",
@@ -147,6 +193,50 @@ export const getModuleByIdRoute = createRoute({
         },
       },
       description: "Module retrieved successfully with lessons",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Unauthorized - authentication required",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Module not found",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+      description: "Internal server error",
+    },
+  },
+});
+
+export const deleteModuleRoute = createRoute({
+  method: "delete",
+  path: "/{id}",
+  tags: ["Modules"],
+  security: [{ Bearer: [] }, { cookieAuth: [] }],
+  request: {
+    params: moduleIdParamSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: deleteModuleResponseSchema,
+        },
+      },
+      description: "Module and associated lessons soft deleted successfully",
     },
     401: {
       content: {
