@@ -507,3 +507,93 @@ export const listEnrollmentsController = async (c: Context) => {
     );
   }
 };
+
+/**
+ * Handles an HTTP request to mark a course as completed.
+ *
+ * The request body must contain:
+ * - userId: The ID of the user completing the course
+ * - courseId: The ID of the course to mark as completed
+ *
+ * The response will contain:
+ * - success: A boolean indicating if the operation was successful
+ * - data: The course progress and certificate information
+ * - message: A string indicating the result of the operation
+ *
+ * If the request body is invalid, a 400 response will be returned with an error message.
+ * If the user is not enrolled or has not completed all lessons, a 400 response will be returned.
+ * If the course is already completed, a 409 response will be returned.
+ * If an error occurs during the process, a 500 response will be returned with an error message.
+ */
+export const markCourseCompletedController = async (c: Context) => {
+  try {
+    const body = await c.req.json();
+    const { markCourseCompletedSchema } = await import("./validation");
+    const { markCourseCompletedService } = await import("./service");
+    
+    const validatedData = markCourseCompletedSchema.parse(body);
+    const { userId, courseId } = validatedData;
+
+    const result = await markCourseCompletedService(userId, courseId);
+
+    return c.json(
+      {
+        success: true,
+        data: result,
+        message: "Course marked as completed and certificate generated successfully",
+      },
+      200
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return c.json(
+        {
+          success: false,
+          error: error.issues[0]?.message ?? "Validation Error",
+        },
+        400
+      );
+    }
+
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    
+    // Handle specific error cases
+    if (errorMessage.includes("not enrolled")) {
+      return c.json(
+        {
+          success: false,
+          error: errorMessage,
+        },
+        404
+      );
+    }
+    
+    if (errorMessage.includes("already completed")) {
+      return c.json(
+        {
+          success: false,
+          error: errorMessage,
+        },
+        409
+      );
+    }
+    
+    if (errorMessage.includes("not completed all lessons")) {
+      return c.json(
+        {
+          success: false,
+          error: errorMessage,
+        },
+        400
+      );
+    }
+
+    return c.json(
+      {
+        success: false,
+        error: errorMessage,
+      },
+      500
+    );
+  }
+};

@@ -702,7 +702,6 @@ export const getCourseUserService = async (id: string, userId?: string) => {
         enrolledAt: enrollment.enrolledAt.toISOString(),
         progress: progress ? {
           progressPercent: progress.progressPercent,
-          lastWatchedSeconds: progress.lastWatchedSeconds || 0,
           isCompleted: progress.isCompleted,
           completedAt: progress.completedAt ? progress.completedAt.toISOString() : null,
         } : null,
@@ -960,7 +959,6 @@ export const listCoursesUserService = async (params: ListCoursesParams & { userI
             enrolledAt: enrollment.enrolledAt.toISOString(),
             progress: progress ? {
               progressPercent: progress.progressPercent,
-              lastWatchedSeconds: progress.lastWatchedSeconds || 0,
               isCompleted: progress.isCompleted,
               completedAt: progress.completedAt ? progress.completedAt.toISOString() : null,
             } : null,
@@ -1051,7 +1049,6 @@ export const enrollCourseService = async (userId: string, courseId: string) => {
       enrollmentId: enrollment.id,
       courseId,
       progressPercent: 0,
-      lastWatchedSeconds: 0,
       isCompleted: false,
     })
     .returning();
@@ -1141,7 +1138,6 @@ export const listEnrollmentsService = async (params: {
       courseLevel: courses.level,
       courseLanguage: courses.language,
       progressPercent: courseProgress.progressPercent,
-      progressLastWatchedSeconds: courseProgress.lastWatchedSeconds,
       progressIsCompleted: courseProgress.isCompleted,
       progressCompletedAt: courseProgress.completedAt,
     })
@@ -1199,7 +1195,6 @@ export const listEnrollmentsService = async (params: {
         },
         progress: enrollment.progressPercent !== null ? {
           progressPercent: enrollment.progressPercent,
-          lastWatchedSeconds: enrollment.progressLastWatchedSeconds || 0,
           isCompleted: enrollment.progressIsCompleted || false,
           completedAt: enrollment.progressCompletedAt ? enrollment.progressCompletedAt.toISOString() : null,
         } : null,
@@ -1228,5 +1223,4 @@ export const listEnrollmentsService = async (params: {
     },
   };
 };
-
 

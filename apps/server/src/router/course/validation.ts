@@ -1026,3 +1026,77 @@ export const listEnrollmentsUserResponseSchema = z.object({
     }),
   }),
 });
+
+// Mark course as completed request schema
+export const markCourseCompletedSchema = z.object({
+  userId: z.string().uuid().openapi({
+    description: "User ID who completed the course",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  }),
+  courseId: z.string().uuid().openapi({
+    description: "Course ID to mark as completed",
+    example: "987e6543-e21b-34d5-b678-123456789abc",
+  }),
+});
+
+// Mark course as completed response schema
+export const markCourseCompletedResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: z.object({
+    courseProgress: z.object({
+      id: z.string().uuid().openapi({
+        description: "Course progress ID",
+        example: "123e4567-e89b-12d3-a456-426614174000",
+      }),
+      enrollmentId: z.string().uuid().openapi({
+        description: "Enrollment ID",
+        example: "987e6543-e21b-34d5-b678-123456789abc",
+      }),
+      courseId: z.string().uuid().openapi({
+        description: "Course ID",
+        example: "abc12345-e21b-34d5-b678-123456789abc",
+      }),
+      progressPercent: z.number().openapi({
+        description: "Progress percentage",
+        example: 100,
+      }),
+      isCompleted: z.boolean().openapi({
+        description: "Whether the course is completed",
+        example: true,
+      }),
+      completedAt: z.string().datetime().openapi({
+        description: "Completion timestamp",
+        example: "2024-12-07T12:00:00Z",
+      }),
+    }),
+    certificate: z.object({
+      id: z.string().uuid().openapi({
+        description: "Certificate ID",
+        example: "def45678-e21b-34d5-b678-123456789def",
+      }),
+      certificateNumber: z.string().openapi({
+        description: "Unique certificate number",
+        example: "CERT-LX8K9P2-A4B3C2",
+      }),
+      certificateFileId: z.string().uuid().openapi({
+        description: "File ID of the generated certificate PDF",
+        example: "ghi78901-e21b-34d5-b678-123456789ghi",
+      }),
+      certificateUrl: z.string().url().openapi({
+        description: "URL to download the certificate",
+        example: "https://cdn.example.com/certificates/cert-123.pdf",
+      }),
+      issuedAt: z.string().datetime().openapi({
+        description: "Certificate issue timestamp",
+        example: "2024-12-07T12:00:00Z",
+      }),
+    }),
+  }),
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Course marked as completed and certificate generated successfully",
+  }),
+});

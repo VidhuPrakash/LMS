@@ -15,7 +15,7 @@ import {
 export const createModuleRoute = createRoute({
   method: "post",
   path: "/",
-  tags: ["Modules"],
+  tags: ["Modules - Admin"],
   security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     body: {
@@ -74,7 +74,7 @@ export const createModuleRoute = createRoute({
 export const updateModuleRoute = createRoute({
   method: "put",
   path: "/{id}",
-  tags: ["Modules"],
+  tags: ["Modules - Admin"],
   security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     params: moduleIdParamSchema,
@@ -224,7 +224,7 @@ export const getModuleByIdRoute = createRoute({
 export const deleteModuleRoute = createRoute({
   method: "delete",
   path: "/{id}",
-  tags: ["Modules"],
+  tags: ["Modules - Admin"],
   security: [{ Bearer: [] }, { cookieAuth: [] }],
   request: {
     params: moduleIdParamSchema,

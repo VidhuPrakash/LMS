@@ -2,10 +2,12 @@ import { pgTable, uuid, text, timestamp, numeric, integer, boolean } from "drizz
 import { modules } from "./modules";
 import { user } from "./auth";
 import { relations } from "drizzle-orm";
+import { lessons } from "./lessons";
 
 export const quizzes = pgTable("quizzes", {
   id: uuid("id").primaryKey().defaultRandom(),
   moduleId: uuid("module_id").notNull().references(() => modules.id, { onDelete: "cascade" }),
+  unlockAfterLessonId: uuid("unlock_after_lesson_id").references(() => lessons.id, { onDelete: "set null" }),
   quizOrder: integer("quiz_order").notNull(),
   title: text("title").notNull(),
   instructions: text("instructions"),
