@@ -165,3 +165,148 @@ export const updateLessonResponseSchema = z.object({
     example: "Lesson updated successfully",
   }),
 });
+
+// Module ID query param schema with pagination and search
+export const lessonPaginationQuerySchema = z.object({
+  moduleId: z.string().uuid().openapi({
+    description: "Module ID to filter lessons",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+    param: {
+      name: "moduleId",
+      in: "query",
+    },
+  }),
+  page: z.string().optional().default("1").transform(Number).openapi({
+    description: "Page number",
+    example: "1",
+    param: {
+      name: "page",
+      in: "query",
+    },
+  }),
+  limit: z.string().optional().default("10").transform(Number).openapi({
+    description: "Items per page",
+    example: "10",
+    param: {
+      name: "limit",
+      in: "query",
+    },
+  }),
+  search: z.string().optional().openapi({
+    description: "Search term for filtering lessons by title",
+    example: "Variables",
+    param: {
+      name: "search",
+      in: "query",
+    },
+  }),
+});
+
+// Lesson with files schema for list response
+export const lessonWithFilesSchema = lessonResponseSchema.extend({
+  lessonFiles: z.array(
+    z.object({
+      id: z.string().uuid().openapi({
+        description: "Lesson file ID",
+        example: "def45678-e89b-12d3-a456-426614174000",
+      }),
+      fileId: z.string().uuid().openapi({
+        description: "File ID",
+        example: "456e7890-e89b-12d3-a456-426614174001",
+      }),
+      file: z.object({
+        id: z.string().uuid(),
+        fileName: z.string(),
+        fileUrl: z.string(),
+        fileType: z.string(),
+        fileSize: z.number(),
+      }).openapi({
+        description: "File details",
+      }),
+    })
+  ).openapi({
+    description: "Files attached to the lesson",
+  }),
+});
+
+// List lessons response schema
+export const listLessonsResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: z.object({
+    lessons: z.array(lessonWithFilesSchema),
+    pagination: z.object({
+      page: z.number().openapi({
+        description: "Current page number",
+        example: 1,
+      }),
+      limit: z.number().openapi({
+        description: "Items per page",
+        example: 10,
+      }),
+      total: z.number().openapi({
+        description: "Total number of lessons",
+        example: 25,
+      }),
+      totalPages: z.number().openapi({
+        description: "Total number of pages",
+        example: 3,
+      }),
+    }),
+  }),
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Lessons retrieved successfully",
+  }),
+});
+
+// Get lesson by ID response schema
+export const getLessonResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: lessonWithFilesSchema,
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Lesson retrieved successfully",
+  }),
+});
+
+// Delete lesson response schema
+export const deleteLessonResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Lesson and associated files deleted successfully",
+  }),
+});
+
+// Mark lesson completed request schema
+export const markLessonCompletedSchema = z.object({
+  lessonId: z.string().uuid().openapi({
+    description: "Lesson ID to mark as completed",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  }),
+  userId: z.string().uuid().openapi({
+    description: "User ID who completed the lesson",
+    example: "user123-e89b-12d3-a456-426614174000",
+  }),
+});
+
+// Mark lesson completed response schema
+export const markLessonCompletedResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Lesson marked as completed",
+  }),
+});

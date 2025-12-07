@@ -38,7 +38,6 @@ export const courseProgress = pgTable("course_progress", {
   enrollmentId: uuid("enrollment_id").notNull().references(() => enrollments.id, { onDelete: "cascade" }),
   courseId: uuid("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
   progressPercent: integer("progress_percent").notNull().default(0),
-  lastWatchedSeconds: integer("last_watched_seconds").default(0),
   isCompleted: boolean("is_completed").notNull().default(false),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -60,6 +59,7 @@ export const courseCertificates = pgTable("course_certificates", {
   id: uuid("id").primaryKey().defaultRandom(),
   enrollmentId: uuid("enrollment_id").notNull().references(() => enrollments.id, { onDelete: "cascade" }),
   certificateNumber: text("certificate_number").notNull().unique(),
+  certificateFileId: uuid("certificate_file_id").notNull().references(() => files.id, { onDelete: "cascade" }),
   createdBy: uuid("created_by").notNull().references(() => user.id),
   issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -137,6 +137,10 @@ export const courseCertificatesRelations = relations(courseCertificates, ({ one 
   creator: one(user, {
     fields: [courseCertificates.createdBy],
     references: [user.id],
+  }),
+  certificateFile: one(files, {
+    fields: [courseCertificates.certificateFileId],
+    references: [files.id],
   }),
 }));
 
