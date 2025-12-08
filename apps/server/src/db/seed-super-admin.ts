@@ -8,10 +8,19 @@ import { auth } from '../lib/auth'
 const config = getSeedConfig()
 
 async function seedWithBetterAuth() {
-  logger.info('🌱 Starting seed with Better Auth...')
+  logger.info('Starting seed with Better Auth...')
 
   try {
-    // Step 1: Create user without role
+    // Check if super admin already exists
+    const existingUser = await db.query.user.findFirst({
+      where: eq(user.email, config.SUPER_ADMIN_EMAIL)
+    })
+
+    if (existingUser) {
+      logger.info({ email: config.SUPER_ADMIN_EMAIL }, 'Super admin already exists, skipping seed')
+      return
+    }
+
     const result = await auth.api.signUpEmail({
       body: {
         name: config.SUPER_ADMIN_NAME,
@@ -32,9 +41,8 @@ async function seedWithBetterAuth() {
       throw new Error('User ID not returned from signUpEmail')
     }
 
-    logger.info({ userId }, '✅ Super admin user created')
+    logger.info({ userId }, 'Super admin user created')
 
-    // Step 2: Update role and emailVerified using direct DB update
     await db
       .update(user)
       .set({ 
@@ -44,7 +52,7 @@ async function seedWithBetterAuth() {
       })
       .where(eq(user.id, userId))
 
-    logger.info('✅ Super admin role and email verification updated')
+    logger.info(' Super admin role and email verification updated')
 
   } catch (error) {
     logger.error({ error }, '❌ Seed failed')

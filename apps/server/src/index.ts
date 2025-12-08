@@ -88,9 +88,9 @@ serve({
   port: env.PORT,
 }, async (info) => {
 
-  logger.info(`🚀 Server running on http://localhost:${info.port}`);
+  logger.info(`Server running on http://localhost:${info.port}`);
   logger.info(
-    `📚 API Documentation available at http://localhost:${info.port}/docs`
+    `API Documentation available at http://localhost:${info.port}/docs`
   );
 
   await testEmailConnection();

@@ -297,6 +297,18 @@ export const markLessonCompletedSchema = z.object({
     description: "User ID who completed the lesson",
     example: "user123-e89b-12d3-a456-426614174000",
   }),
+  courseId: z.string().uuid().openapi({
+    description: "Course ID to which the lesson belongs",
+    example: "course123-e89b-12d3-a456-426614174000",
+  }),
+  moduleId: z.string().uuid().openapi({
+    description: "Module ID to which the lesson belongs",
+    example: "module123-e89b-12d3-a456-426614174000",
+  }),
+  lastWatchedSeconds: z.number().int().nonnegative().optional().openapi({
+    description: "Last watched seconds of the lesson if it's video/audio",
+    example: 120,
+  }),
 });
 
 // Mark lesson completed response schema
@@ -308,5 +320,178 @@ export const markLessonCompletedResponseSchema = z.object({
   message: z.string().openapi({
     description: "Success message",
     example: "Lesson marked as completed",
+  }),
+});
+
+// Lesson comment schemas
+
+// Create lesson comment schema
+export const createLessonCommentSchema = z.object({
+  lessonId: z.string().uuid().openapi({
+    description: "Lesson ID to comment on",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  }),
+  userId: z.string().uuid().openapi({
+    description: "User ID creating the comment",
+    example: "user123-e89b-12d3-a456-426614174000",
+  }),
+  commentText: z.string().min(1).max(1000).openapi({
+    description: "Comment text",
+    example: "Great lesson! Very informative.",
+  }),
+});
+
+// Update lesson comment schema
+export const updateLessonCommentSchema = z.object({
+  commentText: z.string().min(1).max(1000).openapi({
+    description: "Updated comment text",
+    example: "Updated comment text.",
+  }),
+});
+
+// Lesson comment ID param schema
+export const commentIdParamSchema = z.object({
+  id: z.string().uuid().openapi({
+    description: "Comment ID",
+    example: "comment123-e89b-12d3-a456-426614174000",
+    param: {
+      name: "id",
+      in: "path",
+    },
+  }),
+});
+
+// Lesson comment response schema
+export const lessonCommentResponseSchema = z.object({
+  id: z.string().uuid().openapi({
+    description: "Comment ID",
+    example: "comment123-e89b-12d3-a456-426614174000",
+  }),
+  lessonId: z.string().uuid().openapi({
+    description: "Lesson ID",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  }),
+  userId: z.string().uuid().openapi({
+    description: "User ID who created the comment",
+    example: "user123-e89b-12d3-a456-426614174000",
+  }),
+  commentText: z.string().openapi({
+    description: "Comment text",
+    example: "Great lesson!",
+  }),
+  userName: z.string().optional().openapi({
+    description: "Name of the user who created the comment",
+    example: "John Doe",
+  }),
+  userAvatar: z.string().nullable().optional().openapi({
+    description: "Avatar URL of the user",
+    example: "https://example.com/avatars/john-doe.png",
+  }),
+  createdAt: z.string().datetime().openapi({
+    description: "Comment creation timestamp",
+    example: "2024-12-03T12:00:00Z",
+  }),
+  updatedAt: z.string().datetime().openapi({
+    description: "Comment last update timestamp",
+    example: "2024-12-03T12:00:00Z",
+  }),
+});
+
+// List lesson comments query schema
+export const listLessonCommentsQuerySchema = z.object({
+  lessonId: z.string().uuid().openapi({
+    description: "Lesson ID to fetch comments for",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+    param: {
+      name: "lessonId",
+      in: "query",
+    },
+  }),
+  page: z.string().optional().default("1").transform(Number).openapi({
+    description: "Page number",
+    example: "1",
+    param: {
+      name: "page",
+      in: "query",
+    },
+  }),
+  limit: z.string().optional().default("10").transform(Number).openapi({
+    description: "Items per page (max 100)",
+    example: "10",
+    param: {
+      name: "limit",
+      in: "query",
+    },
+  }),
+});
+
+// List lesson comments response schema
+export const listLessonCommentsResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: z.object({
+    comments: z.array(lessonCommentResponseSchema),
+    pagination: z.object({
+      page: z.number().openapi({
+        description: "Current page number",
+        example: 1,
+      }),
+      limit: z.number().openapi({
+        description: "Number of items per page",
+        example: 10,
+      }),
+      totalPages: z.number().openapi({
+        description: "Total number of pages",
+        example: 5,
+      }),
+      totalItems: z.number().openapi({
+        description: "Total number of comments",
+        example: 50,
+      }),
+    }),
+  }),
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Comments retrieved successfully",
+  }),
+});
+
+// Create lesson comment response schema
+export const createLessonCommentResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: lessonCommentResponseSchema,
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Comment created successfully",
+  }),
+});
+
+// Update lesson comment response schema
+export const updateLessonCommentResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  data: lessonCommentResponseSchema,
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Comment updated successfully",
+  }),
+});
+
+// Delete lesson comment response schema
+export const deleteLessonCommentResponseSchema = z.object({
+  success: z.boolean().openapi({
+    description: "Indicates if the operation was successful",
+    example: true,
+  }),
+  message: z.string().openapi({
+    description: "Success message",
+    example: "Comment deleted successfully",
   }),
 });

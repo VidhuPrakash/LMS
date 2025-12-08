@@ -4,5 +4,3 @@ export PATH="/c/Program Files/nodejs:$PATH"
   cd apps/client && pnpm build && cd ../..
 
 lint-staged
-
-pnpm dlx ultracite fix

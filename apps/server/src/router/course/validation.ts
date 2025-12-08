@@ -587,6 +587,10 @@ export const listCoursesAdminResponseSchema = z.object({
         description: "Number of users enrolled in the course",
         example: 150,
       }),
+      totalRating: z.string().openapi({
+        description: "Average rating of the course",
+        example: "4.5",
+      }),
       mentors: z.array(z.object({
         id: z.string().uuid().openapi({
           description: "Course mentor record ID",
@@ -671,6 +675,10 @@ export const listCoursesUserResponseSchema = z.object({
       language: z.string().openapi({
         description: "Course language",
         example: "en",
+      }),
+      totalRating: z.string().openapi({
+        description: "Average rating of the course",
+        example: "4.5",
       }),
       enrollment: z.object({
         id: z.string().uuid().openapi({

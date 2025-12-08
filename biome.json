@@ -1,35 +1,36 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
-  "linter": {
-    "rules": {
-      "suspicious": {
-        "noConsole": "error"
-      }
-    }
-  },
-  "files": {
-    "ignoreUnknown": false,
-    "includes": [
-      "",
-      "!/.next",
-      "!/dist",
-      "!/.turbo",
-      "!/dev-dist",
-      "!/.zed",
-      "!/.vscode",
-      "!/routeTree.gen.ts",
-      "!/src-tauri",
-      "!/.nuxt",
-      "!bts.jsonc",
-      "!/.expo",
-      "!/.wrangler",
-      "!/.source",
-      "!/apps/web/src/components/ui/",
-      "!/apps/web/src/hooks/use-mobile.ts",
-      "!/apps/server/src/lib/auth.ts",
-      "!/apps/web/src/components/mode-toggle.tsx",
-      "!**/apps/web/src/index.css"
-    ]
-  },
-  "extends": ["ultracite"]
+	"$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"suspicious": {
+				"noConsole": "error"
+			}
+		}
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"includes": [
+			"",
+			"!/.next",
+			"!/dist",
+			"!/.turbo",
+			"!/dev-dist",
+			"!/.zed",
+			"!/.vscode",
+			"!/routeTree.gen.ts",
+			"!/src-tauri",
+			"!/.nuxt",
+			"!bts.jsonc",
+			"!/.expo",
+			"!/.wrangler",
+			"!/.source",
+			"!/apps/client/src/components/ui/",
+			"!/apps/client/src/hooks/use-mobile.ts",
+			"!/apps/server/src/lib/auth.ts",
+			"!/apps/client/src/components/mode-toggle.tsx",
+			"!**/apps/client/src/index.css"
+		]
+	}
 }

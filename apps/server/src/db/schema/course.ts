@@ -18,6 +18,7 @@ export const courses = pgTable("courses", {
   price: numeric("price", { precision: 10, scale: 2 }),
    thumbnailFileId: uuid("thumbnail_file_id").references(() => files.id, { onDelete: "set null" }),
   level: courseLevelEnum("level").notNull(),
+  totalRating: numeric("total_rating", { precision: 2, scale: 1 }).notNull().default("0"),
   language: text("language").notNull().default("en"),
   status: courseStatusEnum("status").notNull().default("draft"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -46,6 +47,7 @@ export const courseProgress = pgTable("course_progress", {
 export const courseWatchedLessons = pgTable("course_watched_lessons", {
   id: uuid("id").primaryKey().defaultRandom(),
   courseId: uuid("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  userId:uuid("user_id").notNull().references(() => user.id,{onDelete: "cascade"}),
   lessonId: uuid("lesson_id").notNull().references(() => lessons.id, { onDelete: "cascade" }),
   moduleId: uuid("module_id").notNull().references(() => modules.id, { onDelete: "cascade" }),
   lastWatchedSeconds: integer("last_watched_seconds").default(0),
