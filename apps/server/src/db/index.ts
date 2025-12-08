@@ -38,7 +38,6 @@ import {
   lessons,
   lessonsRelations,
   lessonFiles, lessonFilesRelations,
-  userLessonCompleted,
 } from "./schema/lessons";
 import { modules, modulesRelations } from "./schema/modules";
 import {
@@ -84,7 +83,6 @@ const schema = {
   lessonTypeEnum,
   lessons,
   lessonsRelations,
-  userLessonCompleted,
   modules,
   modulesRelations,
   quizAnswers,

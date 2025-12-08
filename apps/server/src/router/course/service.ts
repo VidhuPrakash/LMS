@@ -849,6 +849,7 @@ export const listCoursesAdminService = async (params: ListCoursesParams) => {
         createdAt: course.createdAt.toISOString(),
         updatedAt: course.updatedAt.toISOString(),
         enrolledCount,
+        totalRating: course.totalRating || "0",
         mentors: mentorsWithAvatars,
       };
       
@@ -976,6 +977,7 @@ export const listCoursesUserService = async (params: ListCoursesParams & { userI
         thumbnail: thumbnailUrl,
         level: course.level,
         language: course.language,
+        totalRating: course.totalRating || "0",
         enrollment: enrollmentData,
       };
     })

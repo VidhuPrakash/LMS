@@ -40,15 +40,6 @@ export const lessonFiles = pgTable("lesson_files", {
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
-export const userLessonCompleted = pgTable("user_lesson_completed", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
-  lessonId: uuid("lesson_id").notNull().references(() => lessons.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-})
-
 export const lessonFilesRelations = relations(lessonFiles, ({ one }) => ({
   file: one(files, {
     fields: [lessonFiles.fileId],

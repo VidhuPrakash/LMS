@@ -40,5 +40,9 @@
     "editor.formatOnSave": true
   },
   "biome.enabled": true,
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  }
 }

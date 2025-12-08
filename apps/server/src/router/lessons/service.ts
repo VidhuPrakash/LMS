@@ -1,11 +1,13 @@
-import { eq, and, isNull, like, count, asc } from "drizzle-orm";
-import { db } from "../../db";
-import { lessons, lessonFiles, userLessonCompleted } from "../../db/schema/lessons";
-import { modules } from "../../db/schema/modules";
-import { files } from "../../db/schema/files";
-import type { createLessonSchema, updateLessonSchema, markLessonCompletedSchema } from "./validation";
+import { and, asc, count, desc, eq, isNull, like, sql } from "drizzle-orm";
 import type { z } from "zod";
 import { documentStorage } from "../../config/upload";
+import { db } from "../../db";
+import { courseWatchedLessons } from "../../db/schema/course";
+import { files } from "../../db/schema/files";
+import { lessonComments, lessonFiles, lessons } from "../../db/schema/lessons";
+import { modules } from "../../db/schema/modules";
+import { user } from "../../db/schema/auth";
+import type { createLessonSchema, markLessonCompletedSchema, updateLessonSchema, createLessonCommentSchema, updateLessonCommentSchema } from "./validation";
 
 /**
  * Creates a new lesson in the database
@@ -141,8 +143,8 @@ export const updateLessonService = async (
  */
 export const listLessonsService = async (
   moduleId: string,
-  page: number = 1,
-  limit: number = 10,
+  page = 1,
+  limit = 10,
   search?: string
 ) => {
   const module = await db.query.modules.findFirst({
@@ -275,25 +277,226 @@ export const markLessonCompletedService = async (
       throw new Error("Lesson not found");
     }
 
-    const existingCompletion = await db.query.userLessonCompleted.findFirst({
+    const existingCompletion = await db.query.courseWatchedLessons.findFirst({
       where: and(
-        eq(userLessonCompleted.userId, data.userId),
-        eq(userLessonCompleted.lessonId, data.lessonId),
-        isNull(userLessonCompleted.deletedAt)
+        eq(courseWatchedLessons.userId, data.userId),
+        eq(courseWatchedLessons.lessonId, data.lessonId),
+        isNull(courseWatchedLessons.deletedAt)
       ),
     });
 
     if (existingCompletion) {
       return true; 
     }
+    
 
-    await db.insert(userLessonCompleted).values({
+    await db.insert(courseWatchedLessons).values({
       userId: data.userId,
       lessonId: data.lessonId,
+      courseId: data.courseId,
+      moduleId: data.moduleId,
+      lastWatchedSeconds: data.lastWatchedSeconds,
+      watchedAt: new Date(),
+      updatedAt: new Date(),
     });
 
     return true;
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "Internal Server Error");
   }
+};
+
+// ===================== LESSON COMMENTS SERVICES =====================
+
+/**
+ * Creates a new comment on a lesson
+ * @param data - Comment creation data
+ * @returns The created comment
+ * @throws Error if lesson doesn't exist
+ */
+export const createLessonCommentService = async (
+  data: z.infer<typeof createLessonCommentSchema>
+) => {
+  const lesson = await db.query.lessons.findFirst({
+    where: and(eq(lessons.id, data.lessonId), isNull(lessons.deletedAt)),
+  });
+
+  if (!lesson) {
+    throw new Error("Lesson not found");
+  }
+
+  const [newComment] = await db
+    .insert(lessonComments)
+    .values({
+      lessonId: data.lessonId,
+      userId: data.userId,
+      commentText: data.commentText,
+    })
+    .returning();
+
+  return newComment;
+};
+
+/**
+ * Gets a single lesson comment by ID with user details
+ * @param commentId - Comment ID
+ * @returns The comment with user details
+ * @throws Error if comment doesn't exist
+ */
+export const getLessonCommentService = async (commentId: string) => {
+  const result = await db
+    .select({
+      id: lessonComments.id,
+      lessonId: lessonComments.lessonId,
+      userId: lessonComments.userId,
+      commentText: lessonComments.commentText,
+      createdAt: lessonComments.createdAt,
+      updatedAt: lessonComments.updatedAt,
+      userName: user.name,
+      userAvatar: user.image,
+    })
+    .from(lessonComments)
+    .leftJoin(user, eq(lessonComments.userId, user.id))
+    .where(and(eq(lessonComments.id, commentId), isNull(lessonComments.deletedAt)))
+    .limit(1);
+
+  if (result.length === 0) {
+    throw new Error("Comment not found");
+  }
+
+  return result[0];
+};
+
+/**
+ * Lists lesson comments with pagination
+ * Filtered by lessonId
+ * Includes user details for each comment
+ * @param params - Query parameters (lessonId, page, limit)
+ * @returns Comments list with pagination
+ */
+export const listLessonCommentsService = async (params: {
+  lessonId: string;
+  page: number;
+  limit: number;
+}) => {
+  const { lessonId, page, limit } = params;
+  const offset = (page - 1) * limit;
+
+  const lesson = await db.query.lessons.findFirst({
+    where: and(eq(lessons.id, lessonId), isNull(lessons.deletedAt)),
+  });
+
+  if (!lesson) {
+    throw new Error("Lesson not found");
+  }
+
+  const [{ count: totalCount }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(lessonComments)
+    .where(and(eq(lessonComments.lessonId, lessonId), isNull(lessonComments.deletedAt)));
+
+  const commentsList = await db
+    .select({
+      id: lessonComments.id,
+      lessonId: lessonComments.lessonId,
+      userId: lessonComments.userId,
+      commentText: lessonComments.commentText,
+      createdAt: lessonComments.createdAt,
+      updatedAt: lessonComments.updatedAt,
+      userName: user.name,
+      userAvatar: user.image,
+    })
+    .from(lessonComments)
+    .leftJoin(user, eq(lessonComments.userId, user.id))
+    .where(and(eq(lessonComments.lessonId, lessonId), isNull(lessonComments.deletedAt)))
+    .orderBy(desc(lessonComments.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return {
+    comments: commentsList,
+    pagination: {
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit),
+      totalItems: totalCount,
+    },
+  };
+};
+
+/**
+ * Updates a lesson comment
+ * Users can only update their own comments
+ * @param commentId - Comment ID
+ * @param userId - User ID attempting to update
+ * @param data - Update data
+ * @returns The updated comment
+ * @throws Error if comment doesn't exist or user doesn't have permission
+ */
+export const updateLessonCommentService = async (
+  commentId: string,
+  userId: string,
+  data: z.infer<typeof updateLessonCommentSchema>
+) => {
+  const [existingComment] = await db
+    .select()
+    .from(lessonComments)
+    .where(and(
+      eq(lessonComments.id, commentId), 
+      eq(lessonComments.userId, userId), 
+      isNull(lessonComments.deletedAt)
+    ))
+    .limit(1);
+
+  if (!existingComment) {
+    throw new Error("Comment not found or you don't have permission to update it");
+  }
+
+  const [updatedComment] = await db
+    .update(lessonComments)
+    .set({
+      commentText: data.commentText,
+      updatedAt: new Date(),
+    })
+    .where(eq(lessonComments.id, commentId))
+    .returning();
+
+  return updatedComment;
+};
+
+/**
+ * Deletes a lesson comment (soft delete)
+ * Users can only delete their own comments
+ * @param commentId - Comment ID
+ * @param userId - User ID attempting to delete
+ * @returns Success status
+ * @throws Error if comment doesn't exist or user doesn't have permission
+ */
+export const deleteLessonCommentService = async (
+  commentId: string,
+  userId: string
+) => {
+  const [existingComment] = await db
+    .select()
+    .from(lessonComments)
+    .where(and(
+      eq(lessonComments.id, commentId), 
+      eq(lessonComments.userId, userId), 
+      isNull(lessonComments.deletedAt)
+    ))
+    .limit(1);
+
+  if (!existingComment) {
+    throw new Error("Comment not found or you don't have permission to delete it");
+  }
+
+  await db
+    .update(lessonComments)
+    .set({
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(lessonComments.id, commentId));
+
+  return true;
 };

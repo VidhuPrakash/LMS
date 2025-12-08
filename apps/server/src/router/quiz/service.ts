@@ -2,9 +2,9 @@ import { eq, and, isNull, asc, count } from "drizzle-orm";
 import { db } from "../../db";
 import { modules } from "../../db/schema/modules";
 import { quizzes, quizQuestions, quizOptions, quizAttempts, quizAnswers } from "../../db/schema/quiz";
-import { userLessonCompleted } from "../../db/schema/lessons";
 import type { createQuizSchema, addQuestionSchema, updateQuizSchema, updateQuestionSchema, submitQuizAnswerSchema } from "./validation";
 import type { z } from "zod";
+import { courseWatchedLessons } from "../../db/schema/course";
 
 /**
  * Creates a new quiz without questions in the database
@@ -147,11 +147,11 @@ export const listQuizzesUserService = async (moduleId: string, userId: string) =
   const accessibleQuizzes = [];
   for (const quiz of quizzesData) {
     if (quiz.unlockAfterLessonId) {
-      const completion = await db.query.userLessonCompleted.findFirst({
+      const completion = await db.query.courseWatchedLessons.findFirst({
         where: and(
-          eq(userLessonCompleted.userId, userId),
-          eq(userLessonCompleted.lessonId, quiz.unlockAfterLessonId),
-          isNull(userLessonCompleted.deletedAt)
+          eq(courseWatchedLessons.userId, userId),
+          eq(courseWatchedLessons.lessonId, quiz.unlockAfterLessonId),
+          isNull(courseWatchedLessons.deletedAt)
         ),
       });
 
@@ -230,11 +230,11 @@ export const getQuizByIdUserService = async (id: string, userId: string) => {
 
   // Check if quiz requires lesson completion
   if (quiz.unlockAfterLessonId) {
-    const completion = await db.query.userLessonCompleted.findFirst({
+    const completion = await db.query.courseWatchedLessons.findFirst({
       where: and(
-        eq(userLessonCompleted.userId, userId),
-        eq(userLessonCompleted.lessonId, quiz.unlockAfterLessonId),
-        isNull(userLessonCompleted.deletedAt)
+        eq(courseWatchedLessons.userId, userId),
+        eq(courseWatchedLessons.lessonId, quiz.unlockAfterLessonId),
+        isNull(courseWatchedLessons.deletedAt)
       ),
     });
 
@@ -470,11 +470,11 @@ export const submitQuizAnswerService = async (
 
   // if quiz requires lesson completion
   if (quiz.unlockAfterLessonId) {
-    const completion = await db.query.userLessonCompleted.findFirst({
+    const completion = await db.query.courseWatchedLessons.findFirst({
       where: and(
-        eq(userLessonCompleted.userId, data.userId),
-        eq(userLessonCompleted.lessonId, quiz.unlockAfterLessonId),
-        isNull(userLessonCompleted.deletedAt)
+        eq(courseWatchedLessons.userId, data.userId),
+        eq(courseWatchedLessons.lessonId, quiz.unlockAfterLessonId),
+        isNull(courseWatchedLessons.deletedAt)
       ),
     });
 

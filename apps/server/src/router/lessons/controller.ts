@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import { ZodError } from "zod";
-import { createLessonSchema, updateLessonSchema, lessonPaginationQuerySchema, lessonIdParamSchema, markLessonCompletedSchema } from "./validation";
-import { createLessonService, updateLessonService, listLessonsService, getLessonByIdService, deleteLessonService, markLessonCompletedService } from "./service";
+import { createLessonSchema, updateLessonSchema, lessonPaginationQuerySchema, lessonIdParamSchema, markLessonCompletedSchema, createLessonCommentSchema, updateLessonCommentSchema, commentIdParamSchema, listLessonCommentsQuerySchema } from "./validation";
+import { createLessonService, updateLessonService, listLessonsService, getLessonByIdService, deleteLessonService, markLessonCompletedService, createLessonCommentService, listLessonCommentsService, getLessonCommentService, updateLessonCommentService, deleteLessonCommentService } from "./service";
 
 /**
  * Handles an HTTP request to create a lesson.
@@ -373,6 +373,377 @@ export const markLessonCompletedController = async (c: Context) => {
     }
 
     if (error instanceof Error && error.message === "Lesson not found") {
+      return c.json(
+        {
+          success: false,
+          error: error.message,
+        },
+        404
+      );
+    }
+
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      500
+    );
+  }
+};
+
+// ===================== LESSON COMMENT CONTROLLERS =====================
+
+/**
+ * Handles an HTTP request to create a lesson comment.
+ *
+ * The request body must contain:
+ * - lessonId: The UUID of the lesson to comment on.
+ * - userId: The UUID of the user creating the comment.
+ * - commentText: The comment text.
+ *
+ * The response will contain:
+ * - success: A boolean indicating if the operation was successful.
+ * - data: The created comment object.
+ * - message: A string indicating the result of the operation.
+ *
+ * If the request body is invalid, a 400 response will be returned.
+ * If the lesson doesn't exist, a 404 response will be returned.
+ * If an error occurs, a 500 response will be returned.
+ */
+export const createLessonCommentController = async (c: Context) => {
+  try {
+    const body = await c.req.json();
+    const validatedData = createLessonCommentSchema.parse(body);
+
+    const comment = await createLessonCommentService(validatedData);
+
+    return c.json(
+      {
+        success: true,
+        data: comment,
+        message: "Comment created successfully",
+      },
+      201
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return c.json(
+        {
+          success: false,
+          error: error.issues[0]?.message ?? "Validation Error",
+        },
+        400
+      );
+    }
+
+    if (error instanceof Error && error.message === "Lesson not found") {
+      return c.json(
+        {
+          success: false,
+          error: error.message,
+        },
+        404
+      );
+    }
+
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      500
+    );
+  }
+};
+
+/**
+ * Handles an HTTP request to list lesson comments with pagination.
+ *
+ * The query parameters must contain:
+ * - lessonId: The UUID of the lesson to get comments for.
+ * - page: (Optional) The page number (default: 1).
+ * - limit: (Optional) The number of items per page (default: 10, max: 100).
+ *
+ * The response will contain:
+ * - success: A boolean indicating if the operation was successful.
+ * - data: An object containing comments array and pagination info.
+ * - message: A string indicating the result of the operation.
+ *
+ * If the query parameters are invalid, a 400 response will be returned.
+ * If the lesson doesn't exist, a 404 response will be returned.
+ * If an error occurs, a 500 response will be returned.
+ */
+export const listLessonCommentsController = async (c: Context) => {
+  try {
+    const query = c.req.query();
+    const validatedQuery = listLessonCommentsQuerySchema.parse(query);
+
+    // Ensure limit doesn't exceed 100
+    const limit = Math.min(validatedQuery.limit, 100);
+
+    const result = await listLessonCommentsService({
+      lessonId: validatedQuery.lessonId,
+      page: validatedQuery.page,
+      limit,
+    });
+
+    return c.json(
+      {
+        success: true,
+        data: result,
+        message: "Comments retrieved successfully",
+      },
+      200
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return c.json(
+        {
+          success: false,
+          error: error.issues[0]?.message ?? "Validation Error",
+        },
+        400
+      );
+    }
+
+    if (error instanceof Error && error.message === "Lesson not found") {
+      return c.json(
+        {
+          success: false,
+          error: error.message,
+        },
+        404
+      );
+    }
+
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      500
+    );
+  }
+};
+
+/**
+ * Handles an HTTP request to get a single lesson comment by ID.
+ *
+ * The request params must contain:
+ * - id: The UUID of the comment.
+ *
+ * The response will contain:
+ * - success: A boolean indicating if the operation was successful.
+ * - data: The comment object with user details.
+ * - message: A string indicating the result of the operation.
+ *
+ * If the comment doesn't exist, a 404 response will be returned.
+ * If an error occurs, a 500 response will be returned.
+ */
+export const getLessonCommentController = async (c: Context) => {
+  try {
+    const { id } = c.req.param();
+    const validatedData = commentIdParamSchema.parse({ id });
+
+    const comment = await getLessonCommentService(validatedData.id);
+
+    return c.json(
+      {
+        success: true,
+        data: comment,
+        message: "Comment retrieved successfully",
+      },
+      200
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return c.json(
+        {
+          success: false,
+          error: error.issues[0]?.message ?? "Validation Error",
+        },
+        400
+      );
+    }
+
+    if (error instanceof Error && error.message === "Comment not found") {
+      return c.json(
+        {
+          success: false,
+          error: error.message,
+        },
+        404
+      );
+    }
+
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      500
+    );
+  }
+};
+
+/**
+ * Handles an HTTP request to update a lesson comment.
+ *
+ * The request params must contain:
+ * - id: The UUID of the comment.
+ *
+ * The request body must contain:
+ * - commentText: The updated comment text.
+ *
+ * Users can only update their own comments.
+ *
+ * The response will contain:
+ * - success: A boolean indicating if the operation was successful.
+ * - data: The updated comment object.
+ * - message: A string indicating the result of the operation.
+ *
+ * If the request body is invalid, a 400 response will be returned.
+ * If the comment doesn't exist or user doesn't have permission, a 404 response will be returned.
+ * If an error occurs, a 500 response will be returned.
+ */
+export const updateLessonCommentController = async (c: Context) => {
+  try {
+    const { id } = c.req.param();
+    const body = await c.req.json();
+    
+    const validatedId = commentIdParamSchema.parse({ id });
+    const validatedData = updateLessonCommentSchema.parse(body);
+
+    // Get userId from request context (set by auth middleware)
+    const userId = body.userId;
+
+    if (!userId) {
+      return c.json(
+        {
+          success: false,
+          error: "User ID is required",
+        },
+        400
+      );
+    }
+
+    const comment = await updateLessonCommentService(validatedId.id, userId, validatedData);
+
+    return c.json(
+      {
+        success: true,
+        data: comment,
+        message: "Comment updated successfully",
+      },
+      200
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return c.json(
+        {
+          success: false,
+          error: error.issues[0]?.message ?? "Validation Error",
+        },
+        400
+      );
+    }
+
+    if (error instanceof Error && error.message.includes("permission")) {
+      return c.json(
+        {
+          success: false,
+          error: error.message,
+        },
+        403
+      );
+    }
+
+    if (error instanceof Error && error.message === "Comment not found or you don't have permission to update it") {
+      return c.json(
+        {
+          success: false,
+          error: error.message,
+        },
+        404
+      );
+    }
+
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      500
+    );
+  }
+};
+
+/**
+ * Handles an HTTP request to delete a lesson comment.
+ *
+ * The request params must contain:
+ * - id: The UUID of the comment.
+ *
+ * Users can only delete their own comments.
+ *
+ * The response will contain:
+ * - success: A boolean indicating if the operation was successful.
+ * - message: A string indicating the result of the operation.
+ *
+ * If the comment doesn't exist or user doesn't have permission, a 404 response will be returned.
+ * If an error occurs, a 500 response will be returned.
+ */
+export const deleteLessonCommentController = async (c: Context) => {
+  try {
+    const { id } = c.req.param();
+    const body = await c.req.json();
+    
+    const validatedId = commentIdParamSchema.parse({ id });
+
+    const userId = body.userId;
+
+    if (!userId) {
+      return c.json(
+        {
+          success: false,
+          error: "User ID is required",
+        },
+        400
+      );
+    }
+
+    await deleteLessonCommentService(validatedId.id, userId);
+
+    return c.json(
+      {
+        success: true,
+        message: "Comment deleted successfully",
+      },
+      200
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return c.json(
+        {
+          success: false,
+          error: error.issues[0]?.message ?? "Validation Error",
+        },
+        400
+      );
+    }
+
+    if (error instanceof Error && error.message.includes("permission")) {
+      return c.json(
+        {
+          success: false,
+          error: error.message,
+        },
+        403
+      );
+    }
+
+    if (error instanceof Error && error.message === "Comment not found or you don't have permission to delete it") {
       return c.json(
         {
           success: false,
