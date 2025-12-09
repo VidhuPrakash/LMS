@@ -28,88 +28,96 @@ import type { createCourseSchema, updateCourseSchema } from "./validation";
  * @returns {Promise<Course>} - The created course object.
  */
 export const createCourseService = async (data: z.infer<typeof createCourseSchema>) => {
-  const {
-    title,
-    description,
-    isFree,
-    price,
-    thumbnailFileId,
-    level,
-    language,
-    status,
-    mentorIds,
-  } = data;
 
-  // Generate slug from title
-  const baseSlug = generateSlug(title);
-  
-  // Check for existing slugs
-  const existingCourses = await db
-    .select({ slug: courses.slug })
-    .from(courses)
-    .where(eq(courses.slug, baseSlug));
-  
-  const existingSlugs = existingCourses.map((c) => c.slug);
-  const slug = generateUniqueSlug(baseSlug, existingSlugs);
-
-  const [course] = await db
-    .insert(courses)
-    .values({
+    const {
       title,
-      slug,
-      description: description || null,
+      description,
       isFree,
-      price: price || null,
-      thumbnailFileId: thumbnailFileId || null,
+      price,
+      thumbnailFileId,
       level,
       language,
       status,
-    })
-    .returning();
+      mentorIds,
+    } = data;
 
-  const mentorsData = mentorIds.map((mentorId) => ({
-    courseId: course.id,
-    mentorId,
-  }));
-
-  const insertedMentors = await db
-    .insert(courseMentors)
-    .values(mentorsData)
-    .returning();
-
-  let thumbnailUrl: string | null = null;
-  if (course.thumbnailFileId) {
-    const [thumbnailFile] = await db
-      .select()
-      .from(files)
-      .where(eq(files.id, course.thumbnailFileId))
-      .limit(1);
-
-    if (thumbnailFile && !thumbnailFile.deletedAt) {
-      thumbnailUrl = await documentStorage.getSignedUrl(thumbnailFile.key);
+    if (!isFree && !price) {
+      throw new Error("Price is required if isFree is false");
     }
-  }
 
-  return {
-    id: course.id,
-    title: course.title,
-    slug: course.slug,
-    description: course.description,
-    isFree: course.isFree,
-    price: course.price,
-    thumbnail: thumbnailUrl,
-    level: course.level,
-    language: course.language,
-    status: course.status,
-    createdAt: course.createdAt.toISOString(),
-    updatedAt: course.updatedAt.toISOString(),
-    enrolledCount:0,
-    mentors: insertedMentors.map((mentor) => ({
-      id: mentor.id,
-      mentorId: mentor.mentorId,
-      courseId: mentor.courseId,
-    })),
-  };
+    // Generate slug from title
+    const baseSlug = generateSlug(title);
+
+    // Check for existing slugs
+    const existingCourses = await db
+      .select({ slug: courses.slug })
+      .from(courses)
+      .where(like(courses.slug, `${baseSlug}%`));
+
+
+    const existingSlugs = existingCourses.map((c) => c.slug);
+    const slug = generateUniqueSlug(baseSlug, existingSlugs);
+
+    const [course] = await db
+      .insert(courses)
+      .values({
+        title,
+        slug,
+        description: description || null,
+        isFree,
+        price: isFree ? null : (price || null),
+        thumbnailFileId: thumbnailFileId || null,
+        level,
+        language,
+        status,
+      })
+      .returning();
+    console.log("Created course:", course);
+    const mentorsData = mentorIds.map((mentorId) => ({
+      courseId: course.id,
+      mentorId,
+    }));
+
+    const insertedMentors = await db
+      .insert(courseMentors)
+      .values(mentorsData)
+      .returning();
+
+    console.log("Inserted mentors:", insertedMentors);
+    let thumbnailUrl: string | null = null;
+    if (course.thumbnailFileId) {
+      const [thumbnailFile] = await db
+        .select()
+        .from(files)
+        .where(eq(files.id, course.thumbnailFileId))
+        .limit(1);
+      console.log("Thumbnail file record:", thumbnailFile);
+      if (thumbnailFile && !thumbnailFile.deletedAt) {
+        thumbnailUrl = await documentStorage.getSignedUrl(thumbnailFile.key);
+      }
+
+    }
+
+    return {
+      id: course.id,
+      title: course.title,
+      slug: course.slug,
+      description: course.description,
+      isFree: course.isFree,
+      price: course.price,
+      thumbnail: thumbnailUrl,
+      level: course.level,
+      language: course.language,
+      status: course.status,
+      createdAt: course.createdAt.toISOString(),
+      updatedAt: course.updatedAt.toISOString(),
+      enrolledCount: 0,
+      mentors: insertedMentors.map((mentor) => ({
+        id: mentor.id,
+        mentorId: mentor.mentorId,
+        courseId: mentor.courseId,
+      })),
+    };
 };
 
 /**
@@ -140,18 +148,18 @@ export const updateCourseService = async (id: string, data: z.infer<typeof updat
 
   if (data.title && data.title !== existingCourse.title) {
     const baseSlug = generateSlug(data.title);
-    
+
 
     const existingCourses = await db
       .select({ slug: courses.slug })
       .from(courses);
-    
+
     const existingSlugs = existingCourses
       .filter((c) => c.slug !== existingCourse.slug)
       .map((c) => c.slug);
-    
+
     const slug = generateUniqueSlug(baseSlug, existingSlugs);
-    
+
     updateData.title = data.title;
     updateData.slug = slug;
   }
@@ -197,7 +205,7 @@ export const updateCourseService = async (id: string, data: z.infer<typeof updat
     .select({ count: count() })
     .from(enrollments)
     .where(eq(enrollments.courseId, id));
-  
+
   const enrolledCount = enrollmentCount?.count || 0;
 
   let thumbnailUrl: string | null = null;
@@ -263,14 +271,14 @@ export const deleteCourseService = async (id: string) => {
 
 
   for (const module of courseModules) {
-   
+
     const moduleLessons = await db
       .select()
       .from(lessons)
       .where(eq(lessons.moduleId, module.id));
 
     for (const lesson of moduleLessons) {
-    
+
       const lessonFilesData = await db
         .select()
         .from(lessonFiles)
@@ -287,7 +295,7 @@ export const deleteCourseService = async (id: string) => {
         if (fileRecord) {
           try {
             await documentStorage.deleteDocument(fileRecord.key);
-           
+
             await db
               .update(files)
               .set({ deletedAt })
@@ -299,47 +307,47 @@ export const deleteCourseService = async (id: string) => {
         }
       }
 
-      
+
       await db
         .update(lessonFiles)
         .set({ deletedAt })
         .where(eq(lessonFiles.lessonId, lesson.id));
 
-   
+
       await db
         .update(lessonComments)
         .set({ deletedAt })
         .where(eq(lessonComments.lessonId, lesson.id));
     }
 
-   
+
     await db
       .update(lessons)
       .set({ deletedAt })
       .where(eq(lessons.moduleId, module.id));
 
- 
+
     const moduleQuizzes = await db
       .select()
       .from(quizzes)
       .where(eq(quizzes.moduleId, module.id));
 
     for (const quiz of moduleQuizzes) {
-     
+
       const quizQuestionsData = await db
         .select()
         .from(quizQuestions)
         .where(eq(quizQuestions.quizId, quiz.id));
 
       for (const question of quizQuestionsData) {
-      
+
         await db
           .update(quizOptions)
           .set({ deletedAt })
           .where(eq(quizOptions.questionId, question.id));
       }
 
-    
+
       await db
         .update(quizQuestions)
         .set({ deletedAt })
@@ -852,7 +860,7 @@ export const listCoursesAdminService = async (params: ListCoursesParams) => {
         totalRating: course.totalRating || "0",
         mentors: mentorsWithAvatars,
       };
-      
+
       console.log("Admin Service - Single course data:", JSON.stringify(courseData, null, 2));
       return courseData;
     })
@@ -869,7 +877,7 @@ export const listCoursesAdminService = async (params: ListCoursesParams) => {
       totalPages,
     },
   };
-  
+
   console.log("Admin Service - Final result:", JSON.stringify(result, null, 2));
 
   return result;
@@ -921,7 +929,7 @@ export const listCoursesUserService = async (params: ListCoursesParams & { userI
     .offset(offset)
     .orderBy(courses.createdAt);
 
-    console.log("coursesList", coursesList)
+  console.log("coursesList", coursesList)
   const coursesData = await Promise.all(
     coursesList.map(async (course) => {
       let thumbnailUrl: string | null = null;
@@ -1154,7 +1162,7 @@ export const listEnrollmentsService = async (params: {
 
   const enrollmentsData = await Promise.all(
     enrollmentsList.map(async (enrollment) => {
-  
+
       let userAvatarUrl: string | null = enrollment.userAvatar;
       if (enrollment.userAvatarFileId) {
         const [avatarFile] = await db
@@ -1168,7 +1176,7 @@ export const listEnrollmentsService = async (params: {
         }
       }
 
-    
+
       let thumbnailUrl: string | null = null;
       if (enrollment.courseThumbnailFileId) {
         const [thumbnailFile] = await db
