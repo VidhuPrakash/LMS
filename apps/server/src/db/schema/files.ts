@@ -3,6 +3,7 @@ import { user } from "./auth";
 import { relations } from "drizzle-orm";
 import { courses } from "./course";
 import { lessonFiles } from "./lessons";
+import { webinars } from "./webinar";
 
 export const files = pgTable('files', {
   id: uuid('id')
@@ -29,5 +30,6 @@ export const filesRelations = relations(files, ({ one, many }) => ({
   }),
   courseThumbnails: many(courses),
   userAvatars: many(user),
-  lessonFiles: many(lessonFiles), 
+  lessonFiles: many(lessonFiles),
+  webinarThumbnails: many(webinars, { relationName: "webinar_thumbnail" }),
 }));

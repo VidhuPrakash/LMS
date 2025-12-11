@@ -7,6 +7,7 @@ import lessonRouter from "./lessons";
 import quizRouter from "./quiz";
 import appRouter from "./app";
 import reviewRouter from "./review";
+import webinarRouter from "./webinar";
 
 const router = new OpenAPIHono();
 
@@ -19,6 +20,7 @@ router.route("/v1/module",moduleRouter)
 router.route("/v1/lesson",lessonRouter)
 router.route("/v1/quiz",quizRouter)
 router.route("/v1/review",reviewRouter)
+router.route("/v1/webinar",webinarRouter)
 
 
 export default router;
