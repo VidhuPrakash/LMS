@@ -1,7 +1,7 @@
 import { ZodError } from "zod";
 import { uploadFileService } from "./service";
 import { uploadFileSchema } from "./validation";
-import type { Context } from "hono";
+import { type Context } from "hono";
 
 /**
  * Handles an HTTP request to upload a file to the storage service.
