@@ -82,19 +82,4 @@ app.onError((err, c) => {
   );
 });
 
-
-serve({
-  fetch: app.fetch,
-  port: env.PORT,
-}, async (info) => {
-
-  logger.info(`Server running on http://localhost:${info.port}`);
-  logger.info(
-    `API Documentation available at http://localhost:${info.port}/docs`
-  );
-
-  await testEmailConnection();
-  await seedWithBetterAuth();
-
-
-});
+export default app;
