@@ -94,7 +94,7 @@ serve({
   );
 
   await testEmailConnection();
-  await seedWithBetterAuth();
+  // await seedWithBetterAuth();
 
 
 });
