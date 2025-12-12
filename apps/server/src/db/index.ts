@@ -12,6 +12,48 @@ import {
   userRelations,
   verification,
 } from "./schema/auth";
+import {
+  courseCertificates,
+  courses,
+  courseCertificatesRelations,
+  courseLevelEnum,
+  courseWatchedLessonsRelations,
+  courseMentors,
+  courseMentorsRelations,
+  courseProgress,
+  courseProgressRelations,
+  courseStatusEnum,
+  courseWatchedLessons,
+  reviews,
+  coursesRelations,
+  reviewsRelations,
+
+} from "./schema/course";
+
+import { enrollments, enrollmentsRelations } from "./schema/enrollment";
+import {
+  lessonComments,
+  lessonCommentsRelations,
+  lessonTypeEnum,
+  lessons,
+  lessonsRelations,
+  lessonFiles, lessonFilesRelations,
+} from "./schema/lessons";
+import { modules, modulesRelations } from "./schema/modules";
+import {
+  quizAnswers,
+  quizAnswersRelations,
+  quizAttempts,
+  quizAttemptsRelations,
+  quizOptions,
+  quizOptionsRelations,
+  quizQuestions,
+  quizQuestionsRelations,
+  quizzes,
+  quizzesRelations,
+} from "./schema/quiz";
+import { files, filesRelations } from "./schema/files"
+
 const schema = {
   user,
   account,
@@ -20,6 +62,43 @@ const schema = {
   sessionRelations,
   userRelations,
   verification,
+  courseCertificates,
+  courses,
+  courseCertificatesRelations,
+  courseLevelEnum,
+  courseWatchedLessonsRelations,
+  courseMentors,
+  courseMentorsRelations,
+  courseProgress,
+  courseProgressRelations,
+  courseStatusEnum,
+  courseWatchedLessons,
+  reviews,
+  coursesRelations,
+  reviewsRelations,
+  enrollments,
+  enrollmentsRelations,
+  lessonComments,
+  lessonCommentsRelations,
+  lessonTypeEnum,
+  lessons,
+  lessonsRelations,
+  modules,
+  modulesRelations,
+  quizAnswers,
+  quizAnswersRelations,
+  quizAttempts,
+  quizAttemptsRelations,
+  quizOptions,
+  quizOptionsRelations,
+  quizQuestions,
+  quizQuestionsRelations,
+  quizzes,
+  quizzesRelations,
+  lessonFiles,
+  lessonFilesRelations,
+  files,
+  filesRelations
 };
 
 neonConfig.webSocketConstructor = ws;
