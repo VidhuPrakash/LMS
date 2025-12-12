@@ -1,4 +1,4 @@
-import type { Context } from "hono";
+import { type Context } from "hono";
 import { ZodError } from "zod";
 import { createModuleSchema, updateModuleSchema, moduleIdParamSchema, courseIdQuerySchema } from "./validation";
 import { createModuleService, updateModuleService, listModulesService, getModuleByIdService, deleteModuleService } from "./service";

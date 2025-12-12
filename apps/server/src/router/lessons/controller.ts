@@ -1,4 +1,4 @@
-import type { Context } from "hono";
+import { type Context } from "hono";
 import { ZodError } from "zod";
 import { createLessonSchema, updateLessonSchema, lessonPaginationQuerySchema, lessonIdParamSchema, markLessonCompletedSchema, createLessonCommentSchema, updateLessonCommentSchema, commentIdParamSchema, listLessonCommentsQuerySchema } from "./validation";
 import { createLessonService, updateLessonService, listLessonsService, getLessonByIdService, deleteLessonService, markLessonCompletedService, createLessonCommentService, listLessonCommentsService, getLessonCommentService, updateLessonCommentService, deleteLessonCommentService } from "./service";
