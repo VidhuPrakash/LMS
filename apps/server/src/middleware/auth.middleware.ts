@@ -1,4 +1,4 @@
-import type { Context, Next } from "hono";
+import { type Context, type Next } from "hono";
 import { auth } from "../lib/auth";
 
 /**

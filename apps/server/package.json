@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bun run --watch --env-file=.env src/index.ts",
     "start": "bun run --env-file=.env src/index.ts",
-    "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --platform=node",
+    "build": "tsc && esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --platform=node",
     "lint": "biome lint .",
     "type-check": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
